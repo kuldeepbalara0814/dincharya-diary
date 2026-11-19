@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0A4A66">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Dincharya Diary</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Mor-pankh: gehra morpankhi neela-hara aadhaar, magenta sirf "abhi karna hai" aur zaroori button par. */
+:root{
+  --bg:#E9F5F4; --card:#FFFFFF; --ink:#0A2B38; --mute:#487078; --line:#C4DFDD;
+  --accent:#B5127B; --accent-ink:#FFFFFF; --ok:#0B8A68; --bad:#B3261E; --soft:#D5EDEB;
+  --band1:#0A4A66; --band2:#0C7C78;
+  --f-body:'Mukta',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-num:'Space Grotesk','Mukta',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#061F28; --card:#0B323F; --ink:#E4F4F2; --mute:#8CB9B8; --line:#17495A;
+  --accent:#E24AA6; --accent-ink:#2A0A1D; --ok:#3DD6A3; --bad:#F59A8B; --soft:#0E4150;
+  --band1:#073A52; --band2:#0A6563; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#061F28; --card:#0B323F; --ink:#E4F4F2; --mute:#8CB9B8; --line:#17495A;
+  --accent:#E24AA6; --accent-ink:#2A0A1D; --ok:#3DD6A3; --bad:#F59A8B; --soft:#0E4150;
+  --band1:#073A52; --band2:#0A6563; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:auto}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  padding-block:0 84px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:560px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0 12px;padding:14px 16px;border-radius:16px;color:#fff;background:linear-gradient(120deg,var(--band1),var(--band2))}
+.hd{display:grid;gap:4px;justify-items:start;min-width:0}
+header .sub{color:#CFE9E7}header .chip{background:rgba(255,255,255,.18);color:#fff}.eye{flex:none}
+h1{font:700 22px/1.2 var(--f-num);margin:0}
+.sub{color:var(--mute);font-size:14px}
+.chip{font:600 13px var(--f-num);background:var(--soft);border-radius:999px;padding:4px 10px;white-space:nowrap}
+section{display:grid;gap:12px;padding-bottom:12px}
+section[hidden]{display:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.card h2{font:700 16px var(--f-num);margin:0 0 8px}
+.now{background:var(--accent);color:var(--accent-ink);border:0}
+.now .sub{color:inherit;opacity:.85}
+.now b{font:700 20px/1.25 var(--f-num);display:block;margin:2px 0 10px}
+.now button{background:var(--accent-ink);color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;min-width:0}
+.stat b{font:700 20px var(--f-num);display:block;font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:var(--mute)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{border:0;border-radius:10px;padding:11px 14px;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer;min-height:44px}
+button.ghost{background:var(--soft);color:var(--ink)}
+button.big{width:100%;font-size:18px;min-height:56px}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.tick{width:40px;min-height:40px;padding:0;border-radius:50%;background:var(--soft);color:var(--mute);font-size:18px}
+.tick[aria-pressed="true"]{background:var(--ok);color:#fff}
+.row .t{font:600 14px var(--f-num);color:var(--mute);background:none;padding:6px;min-height:36px;font-variant-numeric:tabular-nums}
+.row.done .n{color:var(--mute);text-decoration:line-through}
+label{display:grid;gap:4px;font-weight:600;font-size:14px}
+input[type=text],input[type=number],input[type=time],input[type=date],textarea,select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;font-weight:400}
+textarea{min-height:64px;resize:vertical}
+.seg{display:flex;gap:6px}.seg button{flex:1;background:var(--soft);color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.form{display:grid;gap:12px}
+.clock{font:700 44px/1 var(--f-num);text-align:center;font-variant-numeric:tabular-nums;padding:14px 0}
+.bar{height:12px;background:var(--soft);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);min-width:2px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th,td{text-align:left;padding:7px 4px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{font-size:12.5px;color:var(--mute);border-top:0}td.r,th.r{text-align:right}
+.scroll{overflow-x:auto}
+.msg{font-size:14px;color:var(--mute)}
+.warn a{color:var(--accent);font-weight:600}
+details summary{cursor:pointer;padding:6px 0}
+.warn{background:var(--soft);border-radius:10px;padding:10px;font-size:14px}
+.verdict{font:700 18px var(--f-num)}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:4px;background:var(--card);border-top:1px solid var(--line);
+  padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
+nav a{flex:1;text-align:center;text-decoration:none;color:var(--mute);font:600 13px var(--f-num);padding:9px 2px;border-radius:10px}
+nav a[aria-current="page"]{background:var(--soft);color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .4s}}
+body{padding-top:env(safe-area-inset-top,0px)}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header><div class="hd"><h1>Dincharya Diary</h1><div class="sub" id="today"></div><span class="chip" id="lvchip"></span></div><svg class="eye" viewBox="0 0 60 76" width="46" height="58" aria-hidden="true"><ellipse cx="30" cy="38" rx="28" ry="36" fill="#1C9A6B"/><ellipse cx="30" cy="38" rx="22" ry="30" fill="#0F5C8C"/><ellipse cx="30" cy="38" rx="16" ry="23" fill="#0E8F8B"/><ellipse cx="30" cy="40" rx="10" ry="15" fill="#B5127B"/><ellipse cx="30" cy="42" rx="5" ry="8" fill="#2B0B45"/><ellipse cx="28" cy="38" rx="1.6" ry="2.6" fill="#fff" opacity=".7"/></svg></header>
+  <div class="warn" id="nostore" hidden>Is browser me data save nahi ho pa raha (private window?). Normal window me kholo, warna band karte hi sab mit jayega.</div>
+
+  <section id="v-aaj">
+    <div class="warn" id="bknag" hidden></div>
+    <div class="card now" id="nowcard"></div>
+    <div class="stats" id="stats"></div>
+    <div class="card"><h2>Aaj ke niyam</h2><div id="niyam"></div>
+      <p class="msg">Samay par tap karke badal sakte ho. Is page se phone par reminder nahi aate; reminder Termux wale hi rahenge.</p></div>
+  </section>
+
+  <section id="v-simran" hidden>
+    <div class="card"><h2>Simran timer</h2>
+      <div class="clock" id="clock">0:00:00</div>
+      <div id="tbtn"></div>
+      <p class="msg">Page band ya phone lock ho jaye tab bhi timer ginta rehta hai. Wapas aao aur roko.</p></div>
+    <div class="card"><h2>10,000 ghante</h2><div id="prog"></div></div>
+    <div class="card"><h2>Kitna hua</h2><div class="scroll" id="spans"></div></div>
+    <div class="card"><h2>Raftaar aur kab tak poora</h2><div class="scroll" id="pace"></div>
+      <p class="msg">Zyada karoge to date aage aati hai, kam karoge to door jati hai.</p></div>
+    <div class="card"><h2>Pichla simran jodo</h2>
+      <div class="form"><label>Tarikh<input type="date" id="m_date"></label>
+      <label>Kitna (2:30 = 2 ghante 30 min, 90m = 90 minute)<input type="text" id="m_dur" inputmode="text" autocomplete="off" placeholder="2:30"></label>
+      <button class="ghost" id="m_add">Jodo</button><div class="msg" id="m_msg"></div></div></div>
+    <div class="card"><h2>Simran ki entries (galti ho to hatao)</h2><div class="scroll" id="slist"></div></div>
+  </section>
+
+  <section id="v-diary" hidden>
+    <div class="card"><label>Tarikh<input type="date" id="d_date"></label></div>
+    <div class="card" id="dform"></div>
+  </section>
+
+  <section id="v-report" hidden>
+    <div class="card" id="rep"></div>
+    <div class="card"><h2>Level</h2><div class="seg" id="lvseg"></div>
+      <p class="msg" id="lvmsg"></p></div>
+    <div class="card"><h2>Backup</h2>
+      <p class="msg">Data sirf is browser me hai. Hafte me ek baar backup file phone me save kar lo, taaki phone badle ya browser saaf ho to bhi sab wapas aa jaye.</p>
+      <div class="form"><button id="bk_file">Backup file save karo</button>
+      <label class="msg">Backup file se wapas lao<input type="file" id="bk_pick" accept=".json,application/json"></label>
+      <div class="msg" id="bk_info"></div><button class="ghost" id="bk_apply" hidden>Ye data laga do</button>
+      <details><summary class="msg">File na chale to text se</summary>
+      <textarea id="bk" rows="4" aria-label="Backup text"></textarea>
+      <div class="seg"><button class="ghost" id="bk_copy">Copy karo</button><button class="ghost" id="bk_load">Is text se wapas lao</button></div></details>
+      <div class="msg" id="bk_msg"></div></div></div>
+    <div class="card"><h2>Test ya galti saaf karo</h2>
+      <p class="msg">Har hatane wale button ko do baar dabana padta hai. Pehle Backup file save kar lo.</p>
+      <div class="form"><button class="ghost" id="w_today">Aaj ka sab hatao (niyam, diary, aaj ka simran)</button>
+      <label>Poora data hatane ke liye yahan HATAO likho<input type="text" id="w_txt" autocomplete="off"></label>
+      <button class="ghost" id="w_all">Poora data hatao</button><div class="msg" id="w_msg"></div></div></div>
+  </section>
+</div>
+
+<nav aria-label="Menu"><a href="#aaj">Aaj</a><a href="#diary">Diary</a><a href="#simran">Simran</a><a href="#report">Report</a></nav>
+
+<script>
+(function(){
+'use strict';
+var KEY='dincharya.v1', TARGET=10000, START='2026-11-20';
+var NIYAM=[['med_subah','Subah bhajan-simran (dhun 30 min)','03:00'],['yoga','Yoga / exercise 40 min','05:30'],['sat_subah','Subah satsang 30 min','06:30'],
+ ['med_sham','Shaam bhajan-simran 30 min','16:00'],['sat_sham','Shaam satsang 30 min','17:00'],['khana','Khana (6-7 baje tak)','18:00'],['sona','Mobile band, so jao','20:00']];
+var LV={1:[['uthna','Uthne ka time','time'],['simran','Bhajan-simran (baithkar)','dur']],
+ 2:[['aahar','Aahar saada raha','yn'],['khana','Kitni baar khaya','num'],['sona','Sone ka time','time'],['satsang','Satsang (minute)','num']],
+ 3:[['ahimsa','Ahimsa','yn'],['sachai','Sachai','yn'],['namrata','Namrata','yn']],
+ 4:[['pavitrata','Pavitrata','yn'],['seva','Nishkam seva','yn']]};
+var TIPS={1:'Subah uthke pehle 20 minute phone nahi.',2:'Raat ko kal ke 3 sabse zaroori kaam likhna.',3:'Chinta ke liye ek fixed chhota time; baaki din chinta nahi.',4:'Sabse zaroori kaam sabse pehle.'};
+var AQ=[['a_acha','1. Aaj kya acha gaya?'],['a_chuka','2. Kahan chuka / kis par nahi chal paya?'],['a_sudhar','3. Kal ke liye ek sudhaar?']];
+var LQ=[['l_kiya','Kal kya kiya?'],['l_kaisa','Kaisa raha?'],['l_sudhar','Aaj ek sudhaar?']];
+
+var mem=null,storeOK=true;
+function blank(){return {level:1,times:{},ticks:{},days:{},sessions:[],timer:null};}
+function load(){try{var r=localStorage.getItem(KEY);return r?Object.assign(blank(),JSON.parse(r)):blank();}catch(e){storeOK=false;return mem||blank();}}
+var S=load();
+function save(){mem=S;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){storeOK=false;document.getElementById('nostore').hidden=false;}}
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function p2(n){return n<10?'0'+n:''+n;}
+function ymd(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
+function fromYmd(s){var a=s.split('-');return new Date(+a[0],+a[1]-1,+a[2]);}
+function addDays(d,n){var x=new Date(d.getTime());x.setDate(x.getDate()+n);return x;}
+function today(){return ymd(new Date());}
+function hm(min){min=Math.round(min);return Math.floor(min/60)+' ghante '+(min%60)+' min';}
+function tmin(s){var m=/^(\d{1,2}):(\d{2})/.exec(s||'');return m?+m[1]*60+ +m[2]:null;}
+function parseDur(s){s=(s||'').toLowerCase().replace(/\s+/g,'');var m;
+  if((m=/^(\d{1,2}):(\d{2})$/.exec(s))&&+m[2]<60)return +m[1]*60+ +m[2];
+  if((m=/^(\d{1,4})m(?:in)?$/.exec(s)))return +m[1];
+  if((m=/^(\d{1,2}(?:\.\d{1,2})?)h(?:r|rs|our|ours)?$/.exec(s)))return Math.round(parseFloat(m[1])*60);
+  return null;}
+function lvl(){return S.level||1;}
+function fields(l){var o=[];for(var i=1;i<=l;i++)o=o.concat(LV[i]||[]);return o;}
+function ntime(k){return S.times[k]||NIYAM.filter(function(n){return n[0]===k;})[0][2];}
+
+/* ---- simran hisaab: diary (baithkar) + timer sessions ---- */
+function minutesIn(a,b){var sec=0,days={};
+  Object.keys(S.days).forEach(function(d){if((a&&d<a)||(b&&d>b))return;var m=S.days[d].simran;if(m>0){sec+=m*60;days[d]=1;}});
+  S.sessions.forEach(function(x){if((a&&x.date<a)||(b&&x.date>b))return;sec+=x.sec;days[x.date]=1;});
+  return {min:sec/60,days:Object.keys(days).length};}
+function firstDay(){var ds=Object.keys(S.days).filter(function(d){return S.days[d].simran>0;}).concat(S.sessions.map(function(x){return x.date;}));return ds.sort()[0]||null;}
+
+/* ---- Aaj ---- */
+function renderAaj(){
+  var t=today(),tk=S.ticks[t]||{},now=new Date(),nm=now.getHours()*60+now.getMinutes();
+  $('today').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  $('lvchip').textContent='Level '+lvl();
+  var pend=NIYAM.filter(function(n){return !tk[n[0]];}),cur=null,nxt=null;
+  pend.forEach(function(n){var m=tmin(ntime(n[0]));if(m<=nm)cur=n;else if(!nxt)nxt=n;});
+  var any=Object.keys(S.days).length||S.sessions.length,lb=S.lastBackup,old=!lb||(fromYmd(t)-fromYmd(lb))/864e5>7,nag=$('bknag');
+  nag.hidden=!(any&&old);if(!nag.hidden)nag.innerHTML='Backup '+(lb?'7 din se purana hai':'abhi tak nahi liya')+'. <a href="#report">Report tab</a> me Backup file save karo.';
+  var nc=$('nowcard');
+  if(cur){nc.innerHTML='<span class="sub">Ab karna hai</span><b>'+esc(cur[1])+'</b><button class="big" data-t="'+cur[0]+'">Ho gaya</button>';}
+  else if(nxt){nc.innerHTML='<span class="sub">Agla kaam, '+esc(ntime(nxt[0]))+' baje</span><b>'+esc(nxt[1])+'</b><span class="sub">Abhi koi niyam baaki nahi.</span>';}
+  else{nc.innerHTML='<span class="sub">Aaj ka din</span><b>Sab niyam ho gaye</b>';}
+  var sm=minutesIn(t,t).min,tot=minutesIn(null,t).min,done=NIYAM.length-pend.length;
+  $('stats').innerHTML='<div class="stat"><b>'+(sm/60).toFixed(1)+'</b><span>ghante simran aaj</span></div><div class="stat"><b>'+done+'/'+NIYAM.length+'</b><span>niyam aaj</span></div><div class="stat"><b>'+(tot/60).toFixed(0)+'</b><span>kul / 10,000 gh</span></div>';
+  $('niyam').innerHTML=NIYAM.map(function(n){var d=!!tk[n[0]];
+    return '<div class="row'+(d?' done':'')+'"><button class="tick" aria-pressed="'+d+'" data-t="'+n[0]+'" aria-label="'+esc(n[1])+'">'+(d?'✓':'')+'</button><span class="n">'+esc(n[1])+'</span><button class="t" data-e="'+n[0]+'">'+esc(ntime(n[0]))+'</button></div>';}).join('');
+}
+document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+  if(b.dataset.t){var t=today();S.ticks[t]=S.ticks[t]||{};if(b.classList.contains('big'))S.ticks[t][b.dataset.t]=true;else S.ticks[t][b.dataset.t]=!S.ticks[t][b.dataset.t];save();renderAaj();}
+  else if(b.dataset.e){var k=b.dataset.e,i=document.createElement('input');i.type='time';i.value=ntime(k);i.setAttribute('aria-label','Naya samay');i.style.width='110px';
+    b.replaceWith(i);i.focus();i.onchange=function(){if(i.value){S.times[k]=i.value;save();}renderAaj();};i.onblur=function(){renderAaj();};}
+});
+
+/* ---- Simran ---- */
+var tick=null;
+function fmtClock(s){return Math.floor(s/3600)+':'+p2(Math.floor(s%3600/60))+':'+p2(s%60);}
+function renderTimer(){
+  var run=!!(S.timer&&S.timer.start),b=$('tbtn');
+  if(!run){b.innerHTML='<button class="big" id="t_start">Simran shuru</button>';$('clock').textContent='0:00:00';if(tick){clearInterval(tick);tick=null;}return;}
+  b.innerHTML='<div class="seg"><button id="t_stop">Roko aur jodo</button><button class="ghost" id="t_drop">Roko, mat jodo</button></div>';
+  function upd(){$('clock').textContent=fmtClock(Math.max(0,Math.floor((Date.now()-S.timer.start)/1000)));}
+  upd();if(!tick)tick=setInterval(upd,1000);}
+$('tbtn').addEventListener('click',function(e){var id=e.target.id;
+  if(id==='t_start'){S.timer={start:Date.now()};save();renderTimer();}
+  else if(id==='t_stop'||id==='t_drop'){if(id==='t_stop'&&S.timer){var sec=Math.max(0,Math.floor((Date.now()-S.timer.start)/1000));
+      if(sec>0)S.sessions.push({date:ymd(new Date(S.timer.start)),sec:sec,src:'timer'});
+      var sm=new Date(S.timer.start),m=sm.getHours()*60+sm.getMinutes(),t=ymd(sm);S.ticks[t]=S.ticks[t]||{};
+      [['med_subah',180,300],['med_sham',960,1080]].forEach(function(r){if(m>=tmin(ntime(r[0]))-30&&m<r[2]+60)S.ticks[t][r[0]]=true;});}
+    S.timer=null;save();renderTimer();renderSimran();}});
+function renderSimran(){renderSessions();
+  var t=today(),tot=minutesIn(null,t).min,pct=100*tot/(TARGET*60),left=Math.max(0,TARGET*60-tot);
+  $('prog').innerHTML='<div class="bar" role="progressbar" aria-valuenow="'+pct.toFixed(2)+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+Math.min(100,pct)+'%"></i></div><p><b style="font:700 24px var(--f-num)">'+(tot/60).toFixed(1)+'</b> / 10,000 ghante <span class="msg">('+pct.toFixed(3)+'%)</span><br><span class="msg">Baaki '+(left/60).toFixed(1)+' ghante</span></p>';
+  var d=new Date(),sp=[['Aaj',t,t],['Kal + aaj',ymd(addDays(d,-1)),t],['Pichle 7 din',ymd(addDays(d,-6)),t],['Pichle 30 din',ymd(addDays(d,-29)),t],['Is mahine',t.slice(0,8)+'01',t],['Ab tak poora',null,t]];
+  $('spans').innerHTML='<table><tr><th>Muddat</th><th class="r">Kul</th><th class="r">Din</th></tr>'+sp.map(function(r){var x=minutesIn(r[1],r[2]);return '<tr><td>'+r[0]+'</td><td class="r">'+hm(x.min)+'</td><td class="r">'+x.days+'</td></tr>';}).join('')+'</table>';
+  var f=firstDay();
+  if(!f||tot===0){$('pace').innerHTML='<p class="msg">Pehla simran judte hi yahan raftaar dikhegi.</p>';return;}
+  var since=Math.round((fromYmd(t)-fromYmd(f))/864e5)+1,rows=[['Ab tak ka',since],['Pichle 30 din',Math.min(30,since)],['Pichle 7 din',Math.min(7,since)]];
+  $('pace').innerHTML='<table><tr><th>Raftaar</th><th class="r">Roz</th><th>Poora kab</th></tr>'+rows.map(function(r){
+    var m=minutesIn(ymd(addDays(d,-(r[1]-1))),t).min/r[1],eta;
+    if(left<=0)eta='POORA';else if(m<=0)eta='-';else{var days=left/m;eta=days<36500?ymd(addDays(d,Math.round(days))).slice(0,7).split('-').reverse().join('-')+' ('+(days/365).toFixed(1)+' saal)':'100 saal se zyada';}
+    return '<tr><td>'+r[0]+'</td><td class="r">'+(m/60).toFixed(2)+' gh</td><td>'+eta+'</td></tr>';}).join('')+'</table>';
+  $('m_date').max=t;if(!$('m_date').value)$('m_date').value=t;}
+$('m_add').onclick=function(){var d=$('m_date').value,m=parseDur($('m_dur').value),msg=$('m_msg');
+  if(!d||m==null||m<=0||m>1440){msg.textContent='Samay galat hai. 2:30 (2 ghante 30 min) ya 90m likho. Sirf number mat likho.';return;}
+  S.sessions.push({date:d,sec:m*60,src:'manual'});save();$('m_dur').value='';msg.textContent=hm(m)+' jud gaye ('+d+').';renderSimran();};
+function arm(b,fn){ /* do baar dabane par hi hatao */
+  if(b.dataset.armed){clearTimeout(b._t);delete b.dataset.armed;b.textContent=b.dataset.old;fn();return;}
+  b.dataset.armed='1';b.dataset.old=b.textContent;b.textContent='Pakka? Dobara dabao';
+  b._t=setTimeout(function(){b.textContent=b.dataset.old;delete b.dataset.armed;},4000);}
+function renderSessions(){var l=S.sessions.map(function(x,i){return {x:x,i:i};}).sort(function(a,b){return a.x.date<b.x.date?1:a.x.date>b.x.date?-1:b.i-a.i;}).slice(0,40);
+  $('slist').innerHTML=l.length?'<table><tr><th>Tarikh</th><th class="r">Kitna</th><th></th></tr>'+l.map(function(r){return '<tr><td>'+r.x.date+'<br><span class="msg">'+(r.x.src==='timer'?'timer':'khud jodi')+'</span></td><td class="r">'+hm(r.x.sec/60)+'</td><td class="r"><button class="ghost" data-sd="'+r.i+'" aria-label="Ye entry hatao">Hatao</button></td></tr>';}).join('')+'</table>':'<p class="msg">Abhi koi entry nahi.</p>';}
+$('slist').addEventListener('click',function(e){var b=e.target.closest('button[data-sd]');if(!b)return;
+  arm(b,function(){S.sessions.splice(+b.dataset.sd,1);save();renderSimran();});});
+function delBtn(d){return S.days[d]?'<button class="ghost" data-deld="'+d+'">Is din ki diary hatao</button>':'';}
+
+/* ---- Diary ---- */
+function renderDiary(){
+  var dt=$('d_date');dt.max=today();if(!dt.value)dt.value=today();var d=dt.value,e=S.days[d]||{},l=lvl(),past=d<today()&&Object.keys(e).length>0,F=$('dform');
+  function ro(label,v){return '<p><span class="msg">'+label+'</span><br>'+(esc(v)||'-')+'</p>';}
+  if(past){F.innerHTML='<h2>'+d+'</h2><p class="msg">Purani diary badli nahi jati.</p>'+fields(4).filter(function(f){return e[f[0]]!=null;}).map(function(f){return ro(f[1],f[2]==='dur'?hm(e[f[0]]):e[f[0]]);}).join('')+AQ.concat(LQ).filter(function(q){return e[q[0]];}).map(function(q){return ro(q[1],e[q[0]]);}).join('')+delBtn(d);return;}
+  var h='<div class="form"><div class="warn">Kitab-baat: '+esc(TIPS[l])+'</div>';
+  fields(l).forEach(function(f){var k=f[0],v=e[k],id='f_'+k;
+    if(f[2]==='time')h+='<label>'+f[1]+'<input type="time" id="'+id+'" value="'+esc(v||'')+'"></label>';
+    else if(f[2]==='num')h+='<label>'+f[1]+'<input type="number" id="'+id+'" min="0" inputmode="numeric" value="'+esc(v==null?'':v)+'"></label>';
+    else if(f[2]==='dur')h+='<label>'+f[1]+' (2:30 ya 90m)<input type="text" id="'+id+'" autocomplete="off" value="'+(v>0?Math.floor(v/60)+':'+p2(v%60):'')+'"></label>';
+    else h+='<div><b style="font-size:14px">'+f[1]+'</b><div class="seg" id="'+id+'" data-v="'+esc(v||'')+'">'+['✓','✗','–'].map(function(c){return '<button type="button" aria-pressed="'+(v===c)+'" data-c="'+c+'">'+c+'</button>';}).join('')+'</div></div>';});
+  if(l>=4)h+='<b>Kal ka lekha</b>'+LQ.map(function(q){return '<label>'+q[1]+'<textarea id="f_'+q[0]+'">'+esc(e[q[0]]||'')+'</textarea></label>';}).join('');
+  h+='<b>Raat ka analysis (Hinglish, 2-3 line)</b>'+AQ.map(function(q){return '<label>'+q[1]+'<textarea id="f_'+q[0]+'">'+esc(e[q[0]]||'')+'</textarea></label>';}).join('');
+  h+='<button class="big" id="d_save">Save karo</button><div class="msg" id="d_msg"></div>'+delBtn(d)+'</div>';F.innerHTML=h;}
+$('d_date').onchange=renderDiary;
+$('dform').addEventListener('click',function(e){var dd=e.target.closest('button[data-deld]');if(dd){arm(dd,function(){delete S.days[dd.dataset.deld];save();renderDiary();});return;}
+  var b=e.target.closest('button[data-c]');if(b){var g=b.parentNode;g.dataset.v=g.dataset.v===b.dataset.c?'':b.dataset.c;[].forEach.call(g.children,function(x){x.setAttribute('aria-pressed',x.dataset.c===g.dataset.v);});return;}
+  if(e.target.id!=='d_save')return;var d=$('d_date').value,o=Object.assign({},S.days[d]||{}),bad=null;
+  fields(lvl()).concat(lvl()>=4?LQ.map(function(q){return [q[0],q[1],'txt'];}):[],AQ.map(function(q){return [q[0],q[1],'txt'];})).forEach(function(f){var el=$('f_'+f[0]);if(!el)return;var v;
+    if(f[2]==='yn')v=el.dataset.v||undefined;else if(f[2]==='dur'){if(el.value.trim()){v=parseDur(el.value);if(v==null||v>1440){bad=f[1];return;}}}
+    else if(f[2]==='num'){v=el.value===''?undefined:+el.value;}else v=el.value.trim()||undefined;
+    if(v===undefined){return;}o[f[0]]=v;});
+  if(bad){$('d_msg').textContent=bad+': samay galat. 2:30 ya 90m likho.';return;}
+  S.days[d]=o;save();renderDiary();var mm=$('d_msg');if(mm)mm.textContent='Save ho gaya.';});
+
+/* ---- Report + level + backup ---- */
+function renderReport(){
+  var t=today(),d=new Date(),days=[];for(var i=6;i>=0;i--)days.push(ymd(addDays(d,-i)));
+  var filled=days.filter(function(x){return S.days[x]&&Object.keys(S.days[x]).length;}),n=filled.length,rows=[],best=null,worst=null;
+  fields(lvl()).forEach(function(f){var got=filled.filter(function(x){return S.days[x][f[0]]!=null&&S.days[x][f[0]]!=='';});
+    var c=f[2]==='yn'?got.filter(function(x){return S.days[x][f[0]]==='✓';}).length:got.length,p=Math.round(100*c/7);rows.push([f[1],p,true]);});
+  var nd=rows.length;
+  NIYAM.forEach(function(k){var c=days.filter(function(x){return S.ticks[x]&&S.ticks[x][k[0]];}).length;rows.push([k[1],Math.round(100*c/7),false]);});
+  rows.forEach(function(r){if(!best||r[1]>best[1])best=r;if(!worst||r[1]<worst[1])worst=r;});
+  var above=rows.slice(0,nd).filter(function(r){return r[1]>=60;}).length,v,next;
+  if(n>=5&&nd&&above*2>nd){v='Sahi chal raha hai';}else if(n>=3){v='Thoda dheela hai, isi level par ek hafte aur';}else{v='Ruk gaya hai; kal se bas sabse chhoti cheez (bhajan-simran ka time) se dobara shuru karo';}
+  next=(n>=5&&v==='Sahi chal raha hai'&&lvl()<4)?'Agle level '+(lvl()+1)+' par ja sakte ho (neeche se tum tay karo).':'Wahi level '+lvl()+' rakho.';
+  var avg=function(k){var a=filled.map(function(x){return tmin(S.days[x][k]);}).filter(function(m){return m!=null;});if(!a.length)return '-';var m=Math.round(a.reduce(function(s,x){return s+x;},0)/a.length);return Math.floor(m/60)+':'+p2(m%60);};
+  var sm=minutesIn(days[0],t).min;
+  $('rep').innerHTML='<h2>Hafte ki report</h2><p class="msg">'+days[0]+' se '+t+'</p><p>Diary bhari: <b>'+n+'</b> din / 7</p><div class="scroll"><table><tr><th>Cheez</th><th class="r">%</th></tr>'+rows.map(function(r,i){return (i===nd&&nd>=0&&rows.length>nd?'<tr><th colspan="2">Niyam (faisle me nahi ginte)</th></tr>':'')+'<tr><td>'+esc(r[0])+'</td><td class="r">'+r[1]+'%</td></tr>';}).join('')+'</table></div>'
+   +'<p>Uthne ka average: <b>'+avg('uthna')+'</b> &nbsp; Sone ka average: <b>'+avg('sona')+'</b><br>Bhajan-simran is hafte: <b>'+hm(sm)+'</b></p>'
+   +(best?'<p>Sabse achha: '+esc(best[0])+' ('+best[1]+'%)<br>Sabse kamzor: '+esc(worst[0])+' ('+worst[1]+'%)</p>':'')
+   +'<p class="verdict">'+esc(v)+'</p><p class="msg">'+esc(next)+'</p>';
+  $('lvseg').innerHTML=[1,2,3,4].map(function(l){return '<button aria-pressed="'+(l===lvl())+'" data-l="'+l+'">Level '+l+'</button>';}).join('');
+  $('lvmsg').textContent='Level 1: uthna + simran. 2: dincharya. 3: Ahimsa, Sachai, Namrata. 4: poora format. Pichle 7 din me 5 din diary bhari ho to agle level par jao.';
+  $('bk').value=JSON.stringify(S);}
+$('lvseg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.level=+b.dataset.l;save();renderReport();$('lvchip').textContent='Level '+lvl();});
+$('bk_copy').onclick=function(){var el=$('bk'),m=$('bk_msg');el.value=JSON.stringify(S);
+  var ok=function(){m.textContent='Copy ho gaya. Kahin safe jagah paste karke rakh lo.';},no=function(){el.select();m.textContent='Text chuna hua hai, ab khud copy karo.';};
+  try{navigator.clipboard.writeText(el.value).then(ok,no);}catch(x){no();}};
+$('bk_load').onclick=function(){var m=$('bk_msg');try{var o=JSON.parse($('bk').value);if(!o||typeof o!=='object'||!o.days||!o.ticks)throw 0;
+  S=Object.assign(blank(),o);save();m.textContent='Wapas aa gaya.';renderAll();}catch(x){m.textContent='Ye backup text sahi nahi lag raha. Poora text paste karo.';}};
+
+var pending=null;
+$('bk_file').onclick=function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));
+  a.download='dincharya-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();S.lastBackup=today();save();
+  $('bk_msg').textContent='Backup file save ho gayi (Downloads folder me dekho).';};
+$('bk_pick').onchange=function(){var f=this.files&&this.files[0];if(!f)return;var r=new FileReader();
+  r.onload=function(){try{var o=JSON.parse(r.result);if(!o||typeof o!=='object'||!o.days||!o.ticks)throw 0;pending=o;
+    $('bk_info').textContent='File me '+Object.keys(o.days).length+' din ki diary aur '+(o.sessions||[]).length+' simran entries hain. Abhi ka data iski jagah le lega.';$('bk_apply').hidden=false;}
+    catch(x){pending=null;$('bk_apply').hidden=true;$('bk_info').textContent='Ye dincharya ki backup file nahi lag rahi.';}};r.readAsText(f);};
+$('bk_apply').onclick=function(){var b=this;if(!pending)return;arm(b,function(){S=Object.assign(blank(),pending);S.lastBackup=S.lastBackup||today();save();pending=null;b.hidden=true;$('bk_info').textContent='';renderAll();});};
+$('w_today').onclick=function(){var b=this;arm(b,function(){var t=today();delete S.ticks[t];delete S.days[t];S.sessions=S.sessions.filter(function(x){return x.date!==t;});S.timer=null;save();$('w_msg').textContent='Aaj ka data hata diya.';renderReport();});};
+$('w_all').onclick=function(){var b=this,m=$('w_msg');if($('w_txt').value.trim().toUpperCase()!=='HATAO'){m.textContent='Pehle upar dabbe me HATAO likho.';return;}
+  arm(b,function(){S=blank();save();$('w_txt').value='';m.textContent='Sab hata diya. App naye jaisa hai.';renderAll();});};
+
+/* ---- routing ---- */
+var VIEWS=['aaj','diary','simran','report'];
+function renderAll(){var h=(location.hash||'#aaj').slice(1);if(VIEWS.indexOf(h)<0)h='aaj';
+  VIEWS.forEach(function(v){$('v-'+v).hidden=v!==h;});
+  [].forEach.call(document.querySelectorAll('nav a'),function(a){if(a.getAttribute('href')==='#'+h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+  $('lvchip').textContent='Level '+lvl();
+  if(h==='aaj')renderAaj();if(h==='diary')renderDiary();if(h==='simran'){renderTimer();renderSimran();}if(h==='report')renderReport();
+  $('nostore').hidden=storeOK;window.scrollTo(0,0);}
+window.addEventListener('hashchange',renderAll);
+document.addEventListener('visibilitychange',function(){var h=(location.hash||'#aaj').slice(1);
+  if(!document.hidden&&(h==='aaj'||h==='simran')){var y=window.scrollY;renderAll();window.scrollTo(0,y);}});  /* diary/report tab me adhura bhara form nahi mitana */
+renderAll();
+})();
+</script>
+<script>if('serviceWorker' in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});</script>
+</body>
+</html>
