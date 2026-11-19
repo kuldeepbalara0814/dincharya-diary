@@ -121,6 +121,18 @@ body{padding-top:env(safe-area-inset-top,0px)}
     <div class="card" id="dform"></div>
   </section>
 
+  <section id="v-alarm" hidden>
+    <div class="card"><h2>Reminder (Google Calendar)</h2>
+      <p class="msg">Chuno kaun se reminder roz chahiye. Neeche ka button ek file banata hai. Use khologe to sab Google Calendar me roz ke liye jud jayenge, har ek ka naam aur uske kitne minute pehle notification aayegi wo saath me. Clock ke alarm browser nahi laga sakta, wo Termux se lagte hain.</p>
+      <label>Notification kitne minute pehle<select id="al_lead"><option>5</option><option>10</option><option>15</option><option>30</option></select></label></div>
+    <div class="card"><div id="al_list"></div></div>
+    <div class="card"><h2>Apna naya jodo</h2><div class="form">
+      <label>Naam (jaise Gurudwara)<input type="text" id="al_name" autocomplete="off" maxlength="30"></label>
+      <label>Time<input type="time" id="al_time"></label>
+      <button class="ghost" id="al_add">Jodo</button><div class="msg" id="al_msg"></div></div></div>
+    <div class="card"><button class="big" id="al_go">Calendar ke liye file banao</button><p class="msg" id="al_info"></p></div>
+  </section>
+
   <section id="v-report" hidden>
     <div class="card" id="rep"></div>
     <div class="card"><h2>Level</h2><div class="seg" id="lvseg"></div>
@@ -142,7 +154,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
   </section>
 </div>
 
-<nav aria-label="Menu"><a href="#aaj">Aaj</a><a href="#diary">Diary</a><a href="#simran">Simran</a><a href="#report">Report</a></nav>
+<nav aria-label="Menu"><a href="#aaj">Aaj</a><a href="#diary">Diary</a><a href="#simran">Simran</a><a href="#alarm">Alarm</a><a href="#report">Report</a></nav>
 
 <script>
 (function(){
@@ -307,6 +319,33 @@ $('bk_copy').onclick=function(){var el=$('bk'),m=$('bk_msg');el.value=JSON.strin
 $('bk_load').onclick=function(){var m=$('bk_msg');try{var o=JSON.parse($('bk').value);if(!o||typeof o!=='object'||!o.days||!o.ticks)throw 0;
   S=Object.assign(blank(),o);save();m.textContent='Wapas aa gaya.';renderAll();}catch(x){m.textContent='Ye backup text sahi nahi lag raha. Poora text paste karo.';}};
 
+/* ---- Alarm / Calendar reminder ---- */
+function alItems(){var o=[{id:'uthna',name:'Uthna',time:'02:30',zero:true}];
+  NIYAM.forEach(function(n){o.push({id:n[0],name:n[1],time:ntime(n[0])});});
+  o.push({id:'diary',name:'Diary bharo',time:'19:00'},{id:'raat',name:'Raat ka analysis',time:'19:40'});
+  (S.alarms||[]).forEach(function(c){o.push({id:c.id,name:c.name,time:c.time,custom:true});});
+  return o.sort(function(a,b){return a.time<b.time?-1:a.time>b.time?1:0;});}
+function renderAlarm(){var off=S.alOff||{};$('al_lead').value=String(S.alLead||15);
+  $('al_list').innerHTML=alItems().map(function(i){var on=!off[i.id];
+    return '<div class="row'+(on?'':' done')+'"><button class="tick" aria-pressed="'+on+'" data-al="'+esc(i.id)+'" aria-label="'+esc(i.name)+'">'+(on?'✓':'')+'</button><span class="n">'+esc(i.name)+'</span><span><span class="t">'+esc(i.time)+'</span>'+(i.custom?' <button class="ghost" data-alx="'+esc(i.id)+'">Hatao</button>':'')+'</span></div>';}).join('');}
+$('al_lead').onchange=function(){S.alLead=+this.value;save();};
+$('al_list').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+  if(b.dataset.al){S.alOff=S.alOff||{};S.alOff[b.dataset.al]=!S.alOff[b.dataset.al];save();renderAlarm();}
+  else if(b.dataset.alx){arm(b,function(){S.alarms=(S.alarms||[]).filter(function(c){return c.id!==b.dataset.alx;});save();renderAlarm();});}});
+$('al_add').onclick=function(){var n=$('al_name').value.trim(),t=$('al_time').value,m=$('al_msg');
+  if(!n||!/^\d{2}:\d{2}$/.test(t)){m.textContent='Naam aur time dono bharo.';return;}
+  S.alarms=S.alarms||[];S.alarms.push({id:'c'+Date.now().toString(36),name:n.slice(0,30),time:t});save();$('al_name').value='';$('al_time').value='';m.textContent='Jud gaya.';renderAlarm();};
+function icsEsc(x){return String(x).replace(/\\/g,'\\\\').replace(/;/g,'\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');}
+function icsDt(d){return d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+'T'+p2(d.getHours())+p2(d.getMinutes())+'00';}
+function buildIcs(){var off=S.alOff||{},lead=S.alLead||15,L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Dincharya Diary//HI','CALSCALE:GREGORIAN'],now=new Date(),stamp=now.toISOString().replace(/[-:]/g,'').replace(/\.\d+/,''),n=0;
+  alItems().forEach(function(i){if(off[i.id])return;n++;var h=+i.time.slice(0,2),m=+i.time.slice(3,5),st=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m),en=new Date(st.getTime()+15*60000),l=i.zero?0:lead;
+    L.push('BEGIN:VEVENT','UID:dincharya-'+i.id+'@dincharya-diary','DTSTAMP:'+stamp,'DTSTART:'+icsDt(st),'DTEND:'+icsDt(en),'RRULE:FREQ=DAILY','SUMMARY:'+icsEsc(i.name),
+      'DESCRIPTION:'+icsEsc(i.zero?'Abhi uthna hai':l+' minute baad: '+i.name),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(i.zero?i.name+' - abhi':i.name+' - '+l+' min baad'),'TRIGGER:'+(l?'-PT'+l+'M':'PT0S'),'END:VALARM','END:VEVENT');});
+  L.push('END:VCALENDAR');return {text:L.join('\r\n')+'\r\n',n:n};}
+$('al_go').onclick=function(){var r=buildIcs(),i=$('al_info');if(!r.n){i.textContent='Pehle kam se kam ek reminder chuno.';return;}
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([r.text],{type:'text/calendar'}));a.download='dincharya-reminders.ics';document.body.appendChild(a);a.click();a.remove();
+  i.textContent=r.n+' reminder ki file ban gayi (Downloads me dincharya-reminders.ics). Use dabao aur Google Calendar chuno. Dobara banakar khologe to wahi reminder badal jayenge, double nahi honge.';};
+
 var pending=null;
 $('bk_file').onclick=function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));
   a.download='dincharya-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();S.lastBackup=today();save();
@@ -321,12 +360,12 @@ $('w_all').onclick=function(){var b=this,m=$('w_msg');if($('w_txt').value.trim()
   arm(b,function(){S=blank();save();$('w_txt').value='';m.textContent='Sab hata diya. App naye jaisa hai.';renderAll();});};
 
 /* ---- routing ---- */
-var VIEWS=['aaj','diary','simran','report'];
+var VIEWS=['aaj','diary','simran','alarm','report'];
 function renderAll(){var h=(location.hash||'#aaj').slice(1);if(VIEWS.indexOf(h)<0)h='aaj';
   VIEWS.forEach(function(v){$('v-'+v).hidden=v!==h;});
   [].forEach.call(document.querySelectorAll('nav a'),function(a){if(a.getAttribute('href')==='#'+h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   $('lvchip').textContent='Level '+lvl();
-  if(h==='aaj')renderAaj();if(h==='diary')renderDiary();if(h==='simran'){renderTimer();renderSimran();}if(h==='report')renderReport();
+  if(h==='aaj')renderAaj();if(h==='diary')renderDiary();if(h==='simran'){renderTimer();renderSimran();}if(h==='alarm')renderAlarm();if(h==='report')renderReport();
   $('nostore').hidden=storeOK;window.scrollTo(0,0);}
 window.addEventListener('hashchange',renderAll);
 document.addEventListener('visibilitychange',function(){var h=(location.hash||'#aaj').slice(1);
