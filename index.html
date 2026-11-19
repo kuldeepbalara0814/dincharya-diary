@@ -84,6 +84,9 @@ a.btn.ghost{background:var(--soft);color:var(--ink)}.now a.btn{background:var(--
 a.lnk{color:var(--accent);font-weight:600;font-size:13px;margin-left:4px}
 .row3{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
 .row3 button{min-width:44px;padding:8px}.over{color:var(--bad);font-weight:600}
+#lock{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding:24px}
+#lock .lockbox{width:100%;max-width:340px;display:grid;gap:12px}#lock h2{font:700 22px var(--f-num);margin:0}
+.chart svg{display:block;width:100%;height:auto}
 .warn{background:var(--soft);border-radius:10px;padding:10px;font-size:14px}
 .verdict{font:700 18px var(--f-num)}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:4px;background:var(--card);border-top:1px solid var(--line);
@@ -92,11 +95,15 @@ nav a{flex:1;text-align:center;text-decoration:none;color:var(--mute);font:600 1
 nav a[aria-current="page"]{background:var(--soft);color:var(--ink)}
 @media (prefers-reduced-motion:no-preference){.bar i{transition:width .4s}}
 body{padding-top:env(safe-area-inset-top,0px)}
+[hidden]{display:none!important}
 </style>
 
 </head>
 <body>
 <div class="wrap">
+  <div id="lock" hidden role="dialog" aria-modal="true" aria-label="PIN"><div class="lockbox"><h2>Dincharya Diary</h2>
+    <label>PIN likho<input type="password" id="lk_in" inputmode="numeric" autocomplete="off" maxlength="6"></label>
+    <button class="big" id="lk_go">Kholo</button><div class="msg" id="lk_msg"></div></div></div>
   <header><div class="hd"><h1>Dincharya Diary</h1><div class="sub" id="today"></div><span class="chip" id="lvchip"></span></div><svg class="eye" viewBox="0 0 60 76" width="46" height="58" aria-hidden="true"><ellipse cx="30" cy="38" rx="28" ry="36" fill="#1C9A6B"/><ellipse cx="30" cy="38" rx="22" ry="30" fill="#0F5C8C"/><ellipse cx="30" cy="38" rx="16" ry="23" fill="#0E8F8B"/><ellipse cx="30" cy="40" rx="10" ry="15" fill="#B5127B"/><ellipse cx="30" cy="42" rx="5" ry="8" fill="#2B0B45"/><ellipse cx="28" cy="38" rx="1.6" ry="2.6" fill="#fff" opacity=".7"/></svg></header>
   <div class="warn" id="nostore" hidden>Is browser me data save nahi ho pa raha (private window?). Normal window me kholo, warna band karte hi sab mit jayega.</div>
 
@@ -106,9 +113,11 @@ body{padding-top:env(safe-area-inset-top,0px)}
     <div class="warn" id="bknag" hidden></div>
     <div class="card now" id="nowcard"></div>
     <div class="stats" id="stats"></div>
-    <div class="card"><h2>Satsang sunno</h2><div class="form">
-      <a class="btn" href="https://www.youtube.com/@16PS_SantBaniAshram" target="_blank" rel="noopener">16 PS Sant Bani Ashram (YouTube)</a>
-      <a class="btn ghost" href="https://youtu.be/3sCRHQdmNAU" target="_blank" rel="noopener">Pichla video: 19 Nov Zoom Morning Satsang</a></div></div>
+    <p class="msg" id="streak"></p>
+    <div class="card" id="satcard"><h2>Satsang sunno</h2><div class="form">
+      <a class="btn" href="https://www.youtube.com/watch?list=UUb7gG0QEbyNncaOnO2Q8PEw" target="_blank" rel="noopener">Sabse naya satsang chalao</a>
+      <a class="btn ghost" href="https://www.youtube.com/@16PS_SantBaniAshram" target="_blank" rel="noopener">Channel kholo (saare video)</a>
+      <div id="satstat"></div></div></div>
     <div class="card"><h2>Aaj ke niyam</h2><div id="niyam"></div>
       <p class="msg">Samay par tap karke badal sakte ho. Is page se phone par reminder nahi aate; reminder Termux wale hi rahenge.</p></div>
     <div class="card" id="foodcard"></div>
@@ -123,6 +132,8 @@ body{padding-top:env(safe-area-inset-top,0px)}
     <div class="card"><h2>Kitna hua</h2><div class="scroll" id="spans"></div></div>
     <div class="card"><h2>Raftaar aur kab tak poora</h2><div class="scroll" id="pace"></div>
       <p class="msg">Zyada karoge to date aage aati hai, kam karoge to door jati hai.</p></div>
+    <div class="card"><h2>Pichle 14 din (ghante)</h2><div class="chart" id="ch14"></div></div>
+    <div class="card"><h2>Pichle 8 hafte (ghante)</h2><div class="chart" id="ch8w"></div></div>
     <div class="card"><h2>Pichla simran jodo</h2>
       <div class="form"><label>Tarikh<input type="date" id="m_date"></label>
       <label>Kitna (2:30 = 2 ghante 30 min, 90m = 90 minute)<input type="text" id="m_dur" inputmode="text" autocomplete="off" placeholder="2:30"></label>
@@ -151,6 +162,10 @@ body{padding-top:env(safe-area-inset-top,0px)}
     <div class="card" id="rep"></div>
     <div class="card"><h2>Level</h2><div class="seg" id="lvseg"></div>
       <p class="msg" id="lvmsg"></p></div>
+    <div class="card"><h2>PIN (app par tala)</h2><p class="msg" id="pn_state"></p>
+      <div class="form"><label>PIN (4 se 6 ank)<input type="password" id="pn_new" inputmode="numeric" autocomplete="off" maxlength="6"></label>
+      <div class="seg"><button id="pn_set">PIN lagao</button><button class="ghost" id="pn_off">PIN hatao</button></div><div class="msg" id="pn_msg"></div>
+      <p class="msg">PIN hatane ke liye wahi dabba bharke "PIN hatao" dabao. Ye tala chalte-phirte kisi ko dekhne se rokta hai, bank jaisi suraksha nahi. Backup file me diary khuli rehti hai, use sambhal kar rakho. PIN bhool gaye to browser ka site data saaf karna padega, phir Backup file se sab wapas aa jayega (PIN backup me nahi hota).</p></div></div>
     <div class="card"><h2>Backup</h2>
       <p class="msg">Data sirf is browser me hai. Hafte me ek baar backup file phone me save kar lo, taaki phone badle ya browser saaf ho to bhi sab wapas aa jaye.</p>
       <div class="form"><button id="bk_file">Backup file save karo</button>
@@ -173,7 +188,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
 <script>
 (function(){
 'use strict';
-var SAT_URL='https://www.youtube.com/@16PS_SantBaniAshram';
+var SAT_URL='https://www.youtube.com/watch?list=UUb7gG0QEbyNncaOnO2Q8PEw';
 var KEY='dincharya.v1', TARGET=10000, START='2026-11-20';
 var NIYAM=[['med_subah','Subah bhajan-simran (dhun 30 min)','03:00'],['yoga','Yoga / exercise 40 min','05:30'],['sat_subah','Subah satsang 30 min','06:30'],
  ['med_sham','Shaam bhajan-simran 30 min','16:00'],['sat_sham','Shaam satsang 30 min','17:00'],['khana','Khana (6-7 baje tak)','18:00'],['sona','Mobile band, so jao','20:00']];
@@ -216,14 +231,14 @@ function minutesIn(a,b){var sec=0,days={};
 function firstDay(){var ds=Object.keys(S.days).filter(function(d){return S.days[d].simran>0;}).concat(S.sessions.map(function(x){return x.date;}));return ds.sort()[0]||null;}
 
 /* ---- Aaj ---- */
-function renderAaj(){renderFood();
+function renderAaj(){renderFood();renderSat();renderStreak();
   var t=today(),tk=S.ticks[t]||{},now=new Date(),nm=now.getHours()*60+now.getMinutes();
   $('today').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
   $('lvchip').textContent='Level '+lvl();
   var pend=NIYAM.filter(function(n){return !tk[n[0]];}),cur=null,nxt=null;
   pend.forEach(function(n){var m=tmin(ntime(n[0]));if(m<=nm)cur=n;else if(!nxt)nxt=n;});
   var any=Object.keys(S.days).length||S.sessions.length,lb=S.lastBackup,old=!lb||(fromYmd(t)-fromYmd(lb))/864e5>7,nag=$('bknag');
-  nag.hidden=!(any&&old);if(!nag.hidden)nag.innerHTML='Backup '+(lb?'7 din se purana hai':'abhi tak nahi liya')+'. <a href="#report">Report tab</a> me Backup file save karo.';
+  nag.hidden=!(any&&old);if(!nag.hidden)nag.innerHTML='Backup '+(lb?'7 din se purana hai':'abhi tak nahi liya')+'. <button class="ghost" id="nag_bk">Abhi backup lo</button>';
   var nc=$('nowcard');
   if(cur){nc.innerHTML='<span class="sub">Ab karna hai</span><b>'+esc(cur[1])+'</b>'+(cur[0].indexOf('sat_')===0?'<a class="btn" href="'+SAT_URL+'" target="_blank" rel="noopener">Satsang kholo (YouTube)</a>':'')+'<button class="big" data-t="'+cur[0]+'">Ho gaya</button>';}
   else if(nxt){nc.innerHTML='<span class="sub">Agla kaam, '+esc(ntime(nxt[0]))+' baje</span><b>'+esc(nxt[1])+'</b><span class="sub">Abhi koi niyam baaki nahi.</span>';}
@@ -255,7 +270,7 @@ $('tbtn').addEventListener('click',function(e){var id=e.target.id;
       var sm=new Date(S.timer.start),m=sm.getHours()*60+sm.getMinutes(),t=ymd(sm);S.ticks[t]=S.ticks[t]||{};
       [['med_subah',180,300],['med_sham',960,1080]].forEach(function(r){if(m>=tmin(ntime(r[0]))-30&&m<r[2]+60)S.ticks[t][r[0]]=true;});}
     S.timer=null;save();renderTimer();renderSimran();}});
-function renderSimran(){renderSessions();
+function renderSimran(){renderSessions();renderCharts();
   var t=today(),tot=minutesIn(null,t).min,pct=100*tot/(TARGET*60),left=Math.max(0,TARGET*60-tot);
   $('prog').innerHTML='<div class="bar" role="progressbar" aria-valuenow="'+pct.toFixed(2)+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+Math.min(100,pct)+'%"></i></div><p><b style="font:700 24px var(--f-num)">'+(tot/60).toFixed(1)+'</b> / 10,000 ghante <span class="msg">('+pct.toFixed(3)+'%)</span><br><span class="msg">Baaki '+(left/60).toFixed(1)+' ghante</span></p>';
   var d=new Date(),sp=[['Aaj',t,t],['Kal + aaj',ymd(addDays(d,-1)),t],['Pichle 7 din',ymd(addDays(d,-6)),t],['Pichle 30 din',ymd(addDays(d,-29)),t],['Is mahine',t.slice(0,8)+'01',t],['Ab tak poora',null,t]];
@@ -321,12 +336,12 @@ function renderReport(){
   var avg=function(k){var a=filled.map(function(x){return tmin(S.days[x][k]);}).filter(function(m){return m!=null;});if(!a.length)return '-';var m=Math.round(a.reduce(function(s,x){return s+x;},0)/a.length);return Math.floor(m/60)+':'+p2(m%60);};
   var sm=minutesIn(days[0],t).min;
   $('rep').innerHTML='<h2>Hafte ki report</h2><p class="msg">'+days[0]+' se '+t+'</p><p>Diary bhari: <b>'+n+'</b> din / 7</p><div class="scroll"><table><tr><th>Cheez</th><th class="r">%</th></tr>'+rows.map(function(r,i){return (i===nd&&nd>=0&&rows.length>nd?'<tr><th colspan="2">Niyam (faisle me nahi ginte)</th></tr>':'')+'<tr><td>'+esc(r[0])+'</td><td class="r">'+r[1]+'%</td></tr>';}).join('')+'</table></div>'
-   +'<p>Uthne ka average: <b>'+avg('uthna')+'</b> &nbsp; Sone ka average: <b>'+avg('sona')+'</b><br>Bhajan-simran is hafte: <b>'+hm(sm)+'</b></p>'
+   +'<p>Uthne ka average: <b>'+avg('uthna')+'</b> &nbsp; Sone ka average: <b>'+avg('sona')+'</b><br>Bhajan-simran is hafte: <b>'+hm(sm)+'</b><br>Satsang is hafte: <b>'+hm(satMin(days[0],t))+'</b></p>'
    +(best?'<p>Sabse achha: '+esc(best[0])+' ('+best[1]+'%)<br>Sabse kamzor: '+esc(worst[0])+' ('+worst[1]+'%)</p>':'')
    +'<p class="verdict">'+esc(v)+'</p><p class="msg">'+esc(next)+'</p>';
   $('lvseg').innerHTML=[1,2,3,4].map(function(l){return '<button aria-pressed="'+(l===lvl())+'" data-l="'+l+'">Level '+l+'</button>';}).join('');
   $('lvmsg').textContent='Level 1: uthna + simran. 2: dincharya. 3: Ahimsa, Sachai, Namrata. 4: poora format. Pichle 7 din me 5 din diary bhari ho to agle level par jao.';
-  $('bk').value=JSON.stringify(S);}
+  $('bk').value=JSON.stringify(S);pinState();}
 $('lvseg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.level=+b.dataset.l;save();renderReport();$('lvchip').textContent='Level '+lvl();});
 $('bk_copy').onclick=function(){var el=$('bk'),m=$('bk_msg');el.value=JSON.stringify(S);
   var ok=function(){m.textContent='Copy ho gaya. Kahin safe jagah paste karke rakh lo.';},no=function(){el.select();m.textContent='Text chuna hua hai, ab khud copy karo.';};
@@ -374,6 +389,61 @@ $('w_today').onclick=function(){var b=this;arm(b,function(){var t=today();delete
 $('w_all').onclick=function(){var b=this,m=$('w_msg');if($('w_txt').value.trim().toUpperCase()!=='HATAO'){m.textContent='Pehle upar dabbe me HATAO likho.';return;}
   arm(b,function(){S=blank();save();$('w_txt').value='';m.textContent='Sab hata diya. App naye jaisa hai.';renderAll();});};
 
+/* ---- Satsang timer ---- */
+function satMin(a,b){var s=0;(S.satSessions||[]).forEach(function(x){if((a&&x.date<a)||(b&&x.date>b))return;s+=x.sec;});return s/60;}
+function renderSat(){var el=$('satstat');if(!el)return;var t=today(),run=S.satRun&&S.satRun.start;
+  if(run){el.innerHTML='<div class="warn">Satsang chal raha hai: <b id="sat_clock">'+fmtClock(Math.max(0,Math.floor((Date.now()-run)/1000)))+'</b></div><div class="seg"><button id="sat_stop">Khatam, jodo</button><button class="ghost" id="sat_drop">Khatam, mat jodo</button></div>';}
+  else{el.innerHTML='<p class="msg">Satsang: aaj '+hm(satMin(t,t))+' | 7 din '+hm(satMin(ymd(addDays(new Date(),-6)),t))+' | kul '+hm(satMin(null,t))+'. YouTube wale button dabate hi timer apne aap shuru hota hai; sunkar wapas aao aur Khatam dabao. 10 minute se zyada sune to satsang ka niyam bhi ✓ ho jata hai.</p>';}}
+setInterval(function(){var c=$('sat_clock');if(c&&S.satRun&&S.satRun.start)c.textContent=fmtClock(Math.max(0,Math.floor((Date.now()-S.satRun.start)/1000)));},1000);
+document.addEventListener('click',function(e){var a=e.target.closest('a[href^="https://www.youtube.com/"]');
+  if(a&&!(S.satRun&&S.satRun.start)){S.satRun={start:Date.now()};save();renderSat();}
+  var id=e.target.id;
+  if(id==='sat_stop'||id==='sat_drop'){if(id==='sat_stop'&&S.satRun){var sec=Math.max(0,Math.floor((Date.now()-S.satRun.start)/1000)),sd=new Date(S.satRun.start),dt=ymd(sd);
+      if(sec>=60){S.satSessions=S.satSessions||[];S.satSessions.push({date:dt,sec:sec});}
+      if(sec>=600){S.ticks[dt]=S.ticks[dt]||{};S.ticks[dt][sd.getHours()<12?'sat_subah':'sat_sham']=true;}}
+    S.satRun=null;save();renderAaj();}
+  if(id==='nag_bk'){$('bk_file').click();renderAaj();}});
+
+/* ---- Streak (lagataar din) ---- */
+function streak(f){var d=new Date(),n=0,i=f(ymd(d))?0:1;for(;i<400;i++){if(f(ymd(addDays(d,-i))))n++;else break;}return n;}
+function renderStreak(){var el=$('streak');if(!el)return;
+  var a=streak(function(x){return minutesIn(x,x).min>0;}),b=streak(function(x){var e=S.days[x];return !!(e&&Object.keys(e).length);});
+  el.textContent=(a?'Simran lagataar '+a+' din':'Simran: aaj se shuru karo')+'   |   '+(b?'Diary lagataar '+b+' din':'Diary: aaj se shuru karo');}
+
+/* ---- Graph ---- */
+function barChart(data,title){var W=320,H=150,pt=18,pb=24,n=data.length,mx=Math.max.apply(null,data.map(function(x){return x.v;}).concat([0.01])),bw=W/n,tot=data.reduce(function(s,x){return s+x.v;},0);
+  var o='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(title)+': kul '+tot.toFixed(1)+' ghante" style="font:10px var(--f-num)"><title>'+esc(title)+'</title><line x1="0" y1="'+(H-pb)+'" x2="'+W+'" y2="'+(H-pb)+'" style="stroke:var(--line)" stroke-width="1"/>';
+  data.forEach(function(x,i){var h=(H-pt-pb)*x.v/mx,cx=i*bw+bw/2;
+    if(x.v>0)o+='<rect x="'+(i*bw+bw*0.15).toFixed(1)+'" y="'+(H-pb-h).toFixed(1)+'" width="'+(bw*0.7).toFixed(1)+'" height="'+Math.max(h,1).toFixed(1)+'" rx="2" style="fill:var(--accent)"/><text x="'+cx.toFixed(1)+'" y="'+(H-pb-h-3).toFixed(1)+'" text-anchor="middle" style="fill:var(--ink)">'+(x.v>=10?Math.round(x.v):x.v.toFixed(1))+'</text>';
+    o+='<text x="'+cx.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" style="fill:var(--mute)">'+esc(x.l)+'</text>';});
+  return o+'</svg>';}
+function renderCharts(){var d=new Date(),a=[],w=[],i;
+  for(i=13;i>=0;i--){var day=ymd(addDays(d,-i));a.push({l:day.slice(8),v:minutesIn(day,day).min/60});}
+  for(i=7;i>=0;i--){var e=addDays(d,-7*i),st=addDays(e,-6);w.push({l:p2(st.getDate())+'/'+p2(st.getMonth()+1),v:minutesIn(ymd(st),ymd(e)).min/60});}
+  $('ch14').innerHTML=barChart(a,'Pichle 14 din ke simran ghante');$('ch8w').innerHTML=barChart(w,'Pichle 8 hafte ke simran ghante');}
+
+/* ---- PIN ---- */
+var PK='dincharya.pin',PIN=null;try{PIN=JSON.parse(localStorage.getItem(PK)||'null');}catch(e){}
+function hex(b){return [].map.call(new Uint8Array(b),function(x){return ('0'+x.toString(16)).slice(-2);}).join('');}
+function pinHash(p,salt){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+p)).then(hex);}
+var hiddenAt=0,bad=0,until=0;
+function lockNow(){if(!PIN)return;$('lock').hidden=false;$('lk_in').value='';$('lk_msg').textContent='';try{$('lk_in').focus();}catch(e){}}
+$('lk_go').onclick=function(){var m=$('lk_msg');if(Date.now()<until){m.textContent='Kuch der ruko ('+Math.ceil((until-Date.now())/1000)+' second), phir koshish karo.';return;}
+  pinHash($('lk_in').value,PIN.salt).then(function(h){if(h===PIN.hash){bad=0;$('lock').hidden=true;$('lk_in').value='';}
+    else{bad++;if(bad>=5){until=Date.now()+30000*(bad-4);m.textContent='Galat PIN. Kuch der ruko.';}else m.textContent='Galat PIN ('+bad+'/5).';$('lk_in').value='';}});};
+$('lk_in').addEventListener('keydown',function(e){if(e.key==='Enter')$('lk_go').click();});
+document.addEventListener('visibilitychange',function(){if(document.hidden)hiddenAt=Date.now();else if(PIN&&hiddenAt&&Date.now()-hiddenAt>120000)lockNow();});
+function pinState(){var el=$('pn_state');if(el)el.textContent=PIN?'PIN laga hua hai. App 2 minute se zyada band rehne par dobara PIN maangega.':'PIN nahi laga.';}
+$('pn_set').onclick=function(){var v=$('pn_new').value.trim(),m=$('pn_msg');
+  if(!/^\d{4,6}$/.test(v)){m.textContent='PIN 4 se 6 ank ka ho (sirf number).';return;}
+  if(!(window.crypto&&crypto.subtle)){m.textContent='Is browser me PIN nahi lag sakta.';return;}
+  if(PIN){m.textContent='Pehle purana PIN hatao.';return;}
+  var salt=Math.random().toString(36).slice(2)+Date.now().toString(36);
+  pinHash(v,salt).then(function(h){PIN={salt:salt,hash:h};try{localStorage.setItem(PK,JSON.stringify(PIN));}catch(e){}$('pn_new').value='';m.textContent='PIN laga diya.';pinState();});};
+$('pn_off').onclick=function(){var v=$('pn_new').value.trim(),m=$('pn_msg');if(!PIN){m.textContent='PIN laga hi nahi hai.';return;}
+  pinHash(v,PIN.salt).then(function(h){if(h===PIN.hash){PIN=null;try{localStorage.removeItem(PK);}catch(e){}$('pn_new').value='';m.textContent='PIN hata diya.';pinState();}else m.textContent='Galat PIN, hataya nahi.';});};
+lockNow();
+
 /* ---- Khana aur paani ---- */
 /* Roti dheere-dheere: 4+4 se 2 (din) + 1 (raat) tak, har hafte ek kadam. Raat ko roti ki jagah khichdi/dalia bhi chalega. */
 var FOOD_PLAN=[[3,3],[3,2],[2,2],[2,1]],FOOD_START='2026-11-20',WATER_GOAL=10;
@@ -418,12 +488,12 @@ var BOOKS={
 
 /* ---- routing ---- */
 var VIEWS=['aaj','diary','simran','alarm','report'];
-function renderAll(){var h=(location.hash||'#aaj').slice(1);if(VIEWS.indexOf(h)<0)h='aaj';
+function renderAll(){var raw=(location.hash||'#aaj').slice(1),h=raw==='satsang'?'aaj':raw;if(VIEWS.indexOf(h)<0)h='aaj';
   VIEWS.forEach(function(v){$('v-'+v).hidden=v!==h;});
   [].forEach.call(document.querySelectorAll('nav a'),function(a){if(a.getAttribute('href')==='#'+h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   $('lvchip').textContent='Level '+lvl();
   if(h==='aaj')renderAaj();if(h==='diary')renderDiary();if(h==='simran'){renderTimer();renderSimran();}if(h==='alarm')renderAlarm();if(h==='report')renderReport();
-  $('nostore').hidden=storeOK;window.scrollTo(0,0);}
+  $('nostore').hidden=storeOK;window.scrollTo(0,0);if(raw==='satsang'&&$('satcard')&&$('satcard').scrollIntoView)$('satcard').scrollIntoView();}
 window.addEventListener('hashchange',renderAll);
 document.addEventListener('visibilitychange',function(){var h=(location.hash||'#aaj').slice(1);
   if(!document.hidden&&(h==='aaj'||h==='simran')){var y=window.scrollY;renderAll();window.scrollTo(0,y);}});  /* diary/report tab me adhura bhara form nahi mitana */
