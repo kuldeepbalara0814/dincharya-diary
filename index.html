@@ -76,6 +76,14 @@ th{font-size:12.5px;color:var(--mute);border-top:0}td.r,th.r{text-align:right}
 .msg{font-size:14px;color:var(--mute)}
 .warn a{color:var(--accent);font-weight:600}
 details summary{cursor:pointer;padding:6px 0}
+.banner{margin:0 0 12px;padding:12px 14px;cursor:pointer;border:0;color:#fff;background:linear-gradient(120deg,#0C7C78,#1B6AA5 55%,#8E1A74)}
+.banner p{margin:0;font:600 16.5px/1.4 var(--f-body)}.banner span{display:block;margin-top:4px;font-size:13px;opacity:.85}
+@media (prefers-reduced-motion:no-preference){.banner.in p,.banner.in span{animation:bq .6s ease}@keyframes bq{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}}
+a.btn{display:block;text-align:center;text-decoration:none;border-radius:10px;padding:12px 14px;min-height:44px;font-weight:600;background:var(--ink);color:var(--bg)}
+a.btn.ghost{background:var(--soft);color:var(--ink)}.now a.btn{background:var(--accent-ink);color:var(--accent);margin:0 0 8px}
+a.lnk{color:var(--accent);font-weight:600;font-size:13px;margin-left:4px}
+.row3{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.row3 button{min-width:44px;padding:8px}.over{color:var(--bad);font-weight:600}
 .warn{background:var(--soft);border-radius:10px;padding:10px;font-size:14px}
 .verdict{font:700 18px var(--f-num)}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:4px;background:var(--card);border-top:1px solid var(--line);
@@ -92,12 +100,18 @@ body{padding-top:env(safe-area-inset-top,0px)}
   <header><div class="hd"><h1>Dincharya Diary</h1><div class="sub" id="today"></div><span class="chip" id="lvchip"></span></div><svg class="eye" viewBox="0 0 60 76" width="46" height="58" aria-hidden="true"><ellipse cx="30" cy="38" rx="28" ry="36" fill="#1C9A6B"/><ellipse cx="30" cy="38" rx="22" ry="30" fill="#0F5C8C"/><ellipse cx="30" cy="38" rx="16" ry="23" fill="#0E8F8B"/><ellipse cx="30" cy="40" rx="10" ry="15" fill="#B5127B"/><ellipse cx="30" cy="42" rx="5" ry="8" fill="#2B0B45"/><ellipse cx="28" cy="38" rx="1.6" ry="2.6" fill="#fff" opacity=".7"/></svg></header>
   <div class="warn" id="nostore" hidden>Is browser me data save nahi ho pa raha (private window?). Normal window me kholo, warna band karte hi sab mit jayega.</div>
 
+  <div class="card banner" id="banner" role="note" tabindex="0" aria-label="Prerna: agli baat ke liye dabao"><p id="bn_q"></p><span id="bn_b"></span></div>
+
   <section id="v-aaj">
     <div class="warn" id="bknag" hidden></div>
     <div class="card now" id="nowcard"></div>
     <div class="stats" id="stats"></div>
+    <div class="card"><h2>Satsang sunno</h2><div class="form">
+      <a class="btn" href="https://www.youtube.com/@16PS_SantBaniAshram" target="_blank" rel="noopener">16 PS Sant Bani Ashram (YouTube)</a>
+      <a class="btn ghost" href="https://youtu.be/3sCRHQdmNAU" target="_blank" rel="noopener">Pichla video: 19 Nov Zoom Morning Satsang</a></div></div>
     <div class="card"><h2>Aaj ke niyam</h2><div id="niyam"></div>
       <p class="msg">Samay par tap karke badal sakte ho. Is page se phone par reminder nahi aate; reminder Termux wale hi rahenge.</p></div>
+    <div class="card" id="foodcard"></div>
   </section>
 
   <section id="v-simran" hidden>
@@ -159,6 +173,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
 <script>
 (function(){
 'use strict';
+var SAT_URL='https://www.youtube.com/@16PS_SantBaniAshram';
 var KEY='dincharya.v1', TARGET=10000, START='2026-11-20';
 var NIYAM=[['med_subah','Subah bhajan-simran (dhun 30 min)','03:00'],['yoga','Yoga / exercise 40 min','05:30'],['sat_subah','Subah satsang 30 min','06:30'],
  ['med_sham','Shaam bhajan-simran 30 min','16:00'],['sat_sham','Shaam satsang 30 min','17:00'],['khana','Khana (6-7 baje tak)','18:00'],['sona','Mobile band, so jao','20:00']];
@@ -201,7 +216,7 @@ function minutesIn(a,b){var sec=0,days={};
 function firstDay(){var ds=Object.keys(S.days).filter(function(d){return S.days[d].simran>0;}).concat(S.sessions.map(function(x){return x.date;}));return ds.sort()[0]||null;}
 
 /* ---- Aaj ---- */
-function renderAaj(){
+function renderAaj(){renderFood();
   var t=today(),tk=S.ticks[t]||{},now=new Date(),nm=now.getHours()*60+now.getMinutes();
   $('today').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
   $('lvchip').textContent='Level '+lvl();
@@ -210,13 +225,13 @@ function renderAaj(){
   var any=Object.keys(S.days).length||S.sessions.length,lb=S.lastBackup,old=!lb||(fromYmd(t)-fromYmd(lb))/864e5>7,nag=$('bknag');
   nag.hidden=!(any&&old);if(!nag.hidden)nag.innerHTML='Backup '+(lb?'7 din se purana hai':'abhi tak nahi liya')+'. <a href="#report">Report tab</a> me Backup file save karo.';
   var nc=$('nowcard');
-  if(cur){nc.innerHTML='<span class="sub">Ab karna hai</span><b>'+esc(cur[1])+'</b><button class="big" data-t="'+cur[0]+'">Ho gaya</button>';}
+  if(cur){nc.innerHTML='<span class="sub">Ab karna hai</span><b>'+esc(cur[1])+'</b>'+(cur[0].indexOf('sat_')===0?'<a class="btn" href="'+SAT_URL+'" target="_blank" rel="noopener">Satsang kholo (YouTube)</a>':'')+'<button class="big" data-t="'+cur[0]+'">Ho gaya</button>';}
   else if(nxt){nc.innerHTML='<span class="sub">Agla kaam, '+esc(ntime(nxt[0]))+' baje</span><b>'+esc(nxt[1])+'</b><span class="sub">Abhi koi niyam baaki nahi.</span>';}
   else{nc.innerHTML='<span class="sub">Aaj ka din</span><b>Sab niyam ho gaye</b>';}
   var sm=minutesIn(t,t).min,tot=minutesIn(null,t).min,done=NIYAM.length-pend.length;
   $('stats').innerHTML='<div class="stat"><b>'+(sm/60).toFixed(1)+'</b><span>ghante simran aaj</span></div><div class="stat"><b>'+done+'/'+NIYAM.length+'</b><span>niyam aaj</span></div><div class="stat"><b>'+(tot/60).toFixed(0)+'</b><span>kul / 10,000 gh</span></div>';
   $('niyam').innerHTML=NIYAM.map(function(n){var d=!!tk[n[0]];
-    return '<div class="row'+(d?' done':'')+'"><button class="tick" aria-pressed="'+d+'" data-t="'+n[0]+'" aria-label="'+esc(n[1])+'">'+(d?'✓':'')+'</button><span class="n">'+esc(n[1])+'</span><button class="t" data-e="'+n[0]+'">'+esc(ntime(n[0]))+'</button></div>';}).join('');
+    return '<div class="row'+(d?' done':'')+'"><button class="tick" aria-pressed="'+d+'" data-t="'+n[0]+'" aria-label="'+esc(n[1])+'">'+(d?'✓':'')+'</button><span class="n">'+esc(n[1])+(n[0].indexOf('sat_')===0?' <a class="lnk" href="'+SAT_URL+'" target="_blank" rel="noopener">sunno</a>':'')+'</span><button class="t" data-e="'+n[0]+'">'+esc(ntime(n[0]))+'</button></div>';}).join('');
 }
 document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
   if(b.dataset.t){var t=today();S.ticks[t]=S.ticks[t]||{};if(b.classList.contains('big'))S.ticks[t][b.dataset.t]=true;else S.ticks[t][b.dataset.t]=!S.ticks[t][b.dataset.t];save();renderAaj();}
@@ -358,6 +373,48 @@ $('bk_apply').onclick=function(){var b=this;if(!pending)return;arm(b,function(){
 $('w_today').onclick=function(){var b=this;arm(b,function(){var t=today();delete S.ticks[t];delete S.days[t];S.sessions=S.sessions.filter(function(x){return x.date!==t;});S.timer=null;save();$('w_msg').textContent='Aaj ka data hata diya.';renderReport();});};
 $('w_all').onclick=function(){var b=this,m=$('w_msg');if($('w_txt').value.trim().toUpperCase()!=='HATAO'){m.textContent='Pehle upar dabbe me HATAO likho.';return;}
   arm(b,function(){S=blank();save();$('w_txt').value='';m.textContent='Sab hata diya. App naye jaisa hai.';renderAll();});};
+
+/* ---- Khana aur paani ---- */
+/* Roti dheere-dheere: 4+4 se 2 (din) + 1 (raat) tak, har hafte ek kadam. Raat ko roti ki jagah khichdi/dalia bhi chalega. */
+var FOOD_PLAN=[[3,3],[3,2],[2,2],[2,1]],FOOD_START='2026-11-20',WATER_GOAL=10;
+function foodWeek(t){var w=Math.floor((fromYmd(t)-fromYmd(FOOD_START))/864e5/7);return w<0?-1:w;}
+function foodTarget(t){var w=foodWeek(t);return w<0?[4,4]:FOOD_PLAN[Math.min(w,FOOD_PLAN.length-1)];}
+function renderFood(){var t=today(),f=(S.food&&S.food[t])||{din:0,raat:0,water:0},tg=foodTarget(t),w=foodWeek(t),el=$('foodcard');if(!el)return;
+  function row(k,name,val,goal,unit){var over=goal!=null&&val>goal;return '<div class="row3"><span class="n">'+name+'<br><span class="'+(over?'over':'msg')+'">'+val+' / '+goal+' '+unit+(over?' (target se zyada)':'')+'</span></span><button class="ghost" data-f="'+k+':-1" aria-label="'+name+' kam">−</button><button data-f="'+k+':1" aria-label="'+name+' jodo">+</button></div>';}
+  var rows=FOOD_PLAN.map(function(p,i){var a=addDays(fromYmd(FOOD_START),7*i),b=addDays(a,6);return '<tr><td>Hafta '+(i+1)+(i===3?'+':'')+'</td><td>'+ymd(a).slice(5)+' se '+(i===3?'aage':ymd(b).slice(5))+'</td><td class="r">'+p[0]+'</td><td class="r">'+p[1]+'</td></tr>';}).join('');
+  el.innerHTML='<h2>Khana aur paani</h2><p class="msg">'+(w<0?'Abhi (20 Nov se pehle): 4+4 roti chal rahi hai. Kal se plan shuru.':'Hafta '+Math.min(w+1,4)+(w>=3?' (aage bhi yahi)':' / 4')+': din me '+tg[0]+' roti, raat ko '+tg[1]+' roti (ya khichdi / dalia).')+'</p>'
+   +row('din','Din ki roti',f.din||0,tg[0],'roti')+row('raat','Raat ki roti',f.raat||0,tg[1],'roti')+row('water','Paani',f.water||0,WATER_GOAL,'glass')
+   +'<details><summary class="msg">4 hafte ka plan aur khane ki salah</summary><div class="scroll"><table><tr><th>Hafta</th><th>Tarikh</th><th class="r">Din</th><th class="r">Raat</th></tr>'+rows+'</table></div>'
+   +'<p class="msg">Roti kam karne par pet bharne ke liye: dal, sabzi, salad aur chhachh badhao. Raat ko khichdi ya dalia halka rehta hai; safed chawal aur meetha raat ko kam. Khane se pehle ek glass paani, aur dheere chaba kar khao. Bhookh zyada lage ya kamzori aaye to us hafte me ruk jao, agle hafte badhao.</p>'
+   +'<p class="msg">Paani: ICMR-NIN (2024) ke hisaab se poore din ka kul tarl (chai, doodh, paani sab milakar) lagbhag 3.7 litre aadmi aur 2.7 litre aurat ke liye mana gaya hai; garmi aur kasrat me zyada. 10 glass (~2.5 litre) ka lakshya rakha hai. Pyaas aur peshab ka rang bhi dekho: halka peela theek hai.</p>'
+   +'<p class="msg">Ye aam salah hai, ilaaj nahi. Sugar, BP, ya koi bimari ho, ya kamzori aaye to doctor ya dietitian se zaroor puchho.</p></details>';}
+$('foodcard').addEventListener('click',function(e){var b=e.target.closest('button[data-f]');if(!b)return;var a=b.dataset.f.split(':'),t=today();
+  S.food=S.food||{};var f=S.food[t]=S.food[t]||{din:0,raat:0,water:0};f[a[0]]=Math.max(0,Math.min(30,(f[a[0]]||0)+ +a[1]));save();renderFood();});
+
+/* ---- Prerna ka banner (kitabon ki baatein) ---- */
+var BOOKS={
+ "Inner Engineering":["Khushi bahar se nahi, andar se aati hai. Mann ko apna dushman nahi, saathi banao.","Jo khate ho wahi tumhare jeevan ki quality banata hai. Sochkar khao.","Apne vichar aur khud ke beech thodi jagah dhundo; tab unpar kaabu aata hai."],
+ "Ikigai":["Chinta se door raho: lambi aur khushi bhari umar ka ek raaz hai worry na palna.","Kaam me poori tarah doob jao; wahi mann ko jawan rakhta hai.","Bachpan ke sapne aur shauk, apne asli maqsad ka suraag dete hain."],
+ "Rich Dad Poor Dad":["Sampatti wo hai jo jeb me paisa laye, dayitva wo jo jeb se nikale. Pehle sampatti banao.","Paise ke peeche mat bhaago; paise ko apne liye kaam par lagao.","Sirf kamane par nahi, hunar seekhne par dhyan do."],
+ "Chinta Chhodo Sukh Se Jiyo":["Sirf aaj ke din me jiyo. Kal aur parso ki chinta aaj ko kharab karti hai.","Sabse bura kya ho sakta hai, socho aur use sweekar karo. Chinta halki ho jati hai.","Nuksan se seekho, use dil me mat rakho."],
+ "Lok Vyavhar":["Aalochna mat karo. Sachchi tareef karo, chhote sudhar par bhi.","Har insaan khud ko mahatvapurn mehsoos karna chahta hai. Use wo ehsaas do."],
+ "Think and Grow Rich":["Safalta jalti hui ichha se shuru hoti hai, par sirf chahna kaafi nahi; tay lakshya aur yojana chahiye.","Jaldi haar mat maano. Lagataar koshish hi fark banati hai.","Aise logon ka saath chuno jo tumhare lakshya me madad karein."],
+ "Mindset":["Kshamta tay nahi hoti; mehnat aur seekhne se badhti hai.","Asafalta faisla nahi, seekhne ki khabar hai.","Apni aur doosron ki koshish aur tareeke ki tareef karo, sirf talent ki nahi."],
+ "The 5 AM Club":["Subah ka pehla ghanta: 20 minute kasrat, 20 minute chintan ya dhyan, 20 minute seekhna.","Subah ke samay phone door rakho. Wahi sabse shant aur gehri soch ka samay hai."],
+ "Man's Search for Meaning":["Jo ho raha hai wo tumhare haath me nahi, par uska jawab dena tumhare haath me hai.","Kathin se kathin halaat me bhi jeevan ka matlab dhundhne wale tikte hain.","Aaram nahi, arthpurn lakshya ki taraf badho."],
+ "The Alchemist":["Apne sapne ki taraf chalo. Sabse badi rukavat dar hai.","Manzil se zyada safar sikhata hai.","Dil ki suno aur himmat se chalte raho."],
+ "7 Habits of Highly Effective People":["Jo tumhare haath me hai, usi par mehnat karo. Shikayat se kuch nahi badalta.","Zaroori kaam pehle, sirf jaldi wale kaam nahi.","Pehle samjho, phir samjhao.","Rozana sehat, mann aur aatma ki saaj-sambhal karo: aari ko tez rakho."],
+ "Practicing the Power of Now":["Dukh aksar beete kal aur aane wale kal me bhatakne se aata hai. Abhi me raho.","Jo ho raha hai use bina ladai ke sweekar karo, phir badlaav shuru karo.","Jab mann bhatke, saans par dhyan laao."],
+ "Deep Work":["Gehre focus ka kaam roz tay samay par karo. Phone aur notification door.","Boring hona seekho. Har khali pal ko phone se mat bharo.","Gehra focus aaj ki sabse durlabh aur keemti kshamta hai."],
+ "Man ke Haare Haar Hai, Man ke Jeete Jeet":["Man haara to haar, man jeeta to jeet. Pehli ladai apne mann se hai."]
+};
+(function(){var names=Object.keys(BOOKS),Q=[],i=0,more=true;while(more){more=false;names.forEach(function(n){if(BOOKS[n][i]){Q.push([BOOKS[n][i],n]);more=true;}});i++;}
+  var d=new Date(),bi=(d.getFullYear()*372+d.getMonth()*31+d.getDate())%Q.length,bn=$('banner'),tm=null;
+  function show(){var q=Q[bi%Q.length];$('bn_q').textContent=q[0];$('bn_b').textContent='— '+q[1];bn.classList.remove('in');void bn.offsetWidth;bn.classList.add('in');}
+  function next(){bi=(bi+1)%Q.length;show();}
+  function run(){clearInterval(tm);tm=setInterval(next,9000);}
+  bn.addEventListener('click',function(){next();run();});bn.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();next();run();}});
+  show();run();})();
 
 /* ---- routing ---- */
 var VIEWS=['aaj','diary','simran','alarm','report'];
