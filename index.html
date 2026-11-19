@@ -87,6 +87,8 @@ a.lnk{color:var(--accent);font-weight:600;font-size:13px;margin-left:4px}
 #lock{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding:24px}
 #lock .lockbox{width:100%;max-width:340px;display:grid;gap:12px}#lock h2{font:700 22px var(--f-num);margin:0}
 .chart svg{display:block;width:100%;height:auto}
+.ntx{white-space:pre-wrap;margin:8px 0;overflow-wrap:anywhere}details.note{border-top:1px solid var(--line);padding:8px 0}
+details.note summary{cursor:pointer}.tag{font:600 12px var(--f-num);background:var(--soft);border-radius:99px;padding:2px 8px;margin-left:6px}
 .warn{background:var(--soft);border-radius:10px;padding:10px;font-size:14px}
 .verdict{font:700 18px var(--f-num)}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:4px;background:var(--card);border-top:1px solid var(--line);
@@ -146,6 +148,20 @@ body{padding-top:env(safe-area-inset-top,0px)}
     <div class="card" id="dform"></div>
   </section>
 
+  <section id="v-likho" hidden>
+    <div class="card"><h2>Meri diary</h2>
+      <p class="msg">Apne liye likho: satsang me suni baat, kitab ki koi achhi line, ya apna vichar. Tarikh aaj ki apne aap aati hai (badal sakte ho). Samay save karte waqt phone se judta hai.</p>
+      <div class="form"><div class="seg" id="nt_types"></div>
+      <label>Kis ke baare me (satsang ya kitab ka naam, khali bhi chalega)<input type="text" id="nt_title" maxlength="80" autocomplete="off"></label>
+      <label>Likho<textarea id="nt_text" rows="7"></textarea></label>
+      <label>Tarikh<input type="date" id="nt_date"></label>
+      <p class="msg" id="nt_time"></p>
+      <button class="big" id="nt_save">Save karo</button><button class="ghost" id="nt_cancel" hidden>Badalna chhodo, naya likho</button><div class="msg" id="nt_msg"></div></div></div>
+    <div class="card"><h2>Jo likha hai</h2><div class="form">
+      <input type="text" id="nt_find" placeholder="Shabd dhundho" aria-label="Shabd dhundho" autocomplete="off"><div class="seg" id="nt_filter"></div></div>
+      <div id="nt_list"></div></div>
+  </section>
+
   <section id="v-alarm" hidden>
     <div class="card"><h2>Reminder (Google Calendar)</h2>
       <p class="msg">Chuno kaun se reminder roz chahiye. Neeche ka button ek file banata hai. Use khologe to sab Google Calendar me roz ke liye jud jayenge, har ek ka naam aur uske kitne minute pehle notification aayegi wo saath me. Clock ke alarm browser nahi laga sakta, wo Termux se lagte hain.</p>
@@ -183,7 +199,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
   </section>
 </div>
 
-<nav aria-label="Menu"><a href="#aaj">Aaj</a><a href="#diary">Diary</a><a href="#simran">Simran</a><a href="#alarm">Alarm</a><a href="#report">Report</a></nav>
+<nav aria-label="Menu"><a href="#aaj">Aaj</a><a href="#diary">Diary</a><a href="#simran">Simran</a><a href="#alarm">Alarm</a><a href="#likho">Likho</a><a href="#report">Report</a></nav>
 
 <script>
 (function(){
@@ -191,7 +207,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
 var SAT_URL='https://www.youtube.com/watch?list=UUb7gG0QEbyNncaOnO2Q8PEw';
 var KEY='dincharya.v1', TARGET=10000, START='2026-11-20';
 var NIYAM=[['med_subah','Subah bhajan-simran (dhun 30 min)','03:00'],['yoga','Yoga / exercise 40 min','05:30'],['sat_subah','Subah satsang 30 min','06:30'],
- ['med_sham','Shaam bhajan-simran 30 min','16:00'],['sat_sham','Shaam satsang 30 min','17:00'],['khana','Khana (6-7 baje tak)','18:00'],['sona','Mobile band, so jao','20:00']];
+ ['med_sham','Shaam bhajan-simran (2 ghante)','16:00'],['sat_sham','Shaam satsang 30 min','18:00'],['khana','Khana (6:30 se 7 baje tak)','18:30'],['sona','Mobile band, so jao','20:00']];
 var LV={1:[['uthna','Uthne ka time','time'],['simran','Bhajan-simran (baithkar)','dur']],
  2:[['aahar','Aahar saada raha','yn'],['khana','Kitni baar khaya','num'],['sona','Sone ka time','time'],['satsang','Satsang (minute)','num']],
  3:[['ahimsa','Ahimsa','yn'],['sachai','Sachai','yn'],['namrata','Namrata','yn']],
@@ -444,6 +460,33 @@ $('pn_off').onclick=function(){var v=$('pn_new').value.trim(),m=$('pn_msg');if(!
   pinHash(v,PIN.salt).then(function(h){if(h===PIN.hash){PIN=null;try{localStorage.removeItem(PK);}catch(e){}$('pn_new').value='';m.textContent='PIN hata diya.';pinState();}else m.textContent='Galat PIN, hataya nahi.';});};
 lockNow();
 
+/* ---- Likho (personal diary) ---- */
+var NT_TYPES=['Satsang','Kitab','Vichar','Aur'],ntType='Satsang',ntFilter='Sab',ntEdit=null;
+function nowHM(){var d=new Date();return p2(d.getHours())+':'+p2(d.getMinutes());}
+function renderNotes(){
+  $('nt_types').innerHTML=NT_TYPES.map(function(t){return '<button type="button" aria-pressed="'+(t===ntType)+'" data-nt="'+t+'">'+t+'</button>';}).join('');
+  $('nt_filter').innerHTML=['Sab'].concat(NT_TYPES).map(function(t){return '<button type="button" aria-pressed="'+(t===ntFilter)+'" data-ntf="'+t+'">'+t+'</button>';}).join('');
+  if(!$('nt_date').value)$('nt_date').value=today();$('nt_date').max=today();
+  $('nt_time').textContent=ntEdit?'Purani entry badal rahe ho. Uska samay purana hi rahega.':'Samay (phone se): '+nowHM()+'. Save dabate hi yahi judega.';
+  $('nt_cancel').hidden=!ntEdit;renderNoteList();}
+function renderNoteList(){var q=($('nt_find').value||'').trim().toLowerCase(),l=(S.notes||[]).filter(function(n){return (ntFilter==='Sab'||n.type===ntFilter)&&(!q||((n.title||'')+' '+n.text).toLowerCase().indexOf(q)>=0);});
+  l.sort(function(a,b){var x=a.date+' '+a.time,y=b.date+' '+b.time;return x<y?1:x>y?-1:0;});
+  $('nt_list').innerHTML=l.length?l.map(function(n){var head=n.title||n.text.slice(0,60);
+    return '<details class="note"><summary><b>'+esc(head)+'</b><span class="tag">'+esc(n.type)+'</span><br><span class="msg">'+esc(n.date)+' '+esc(n.time)+(n.edited?' (badla: '+esc(n.edited)+')':'')+'</span></summary><p class="ntx">'+esc(n.text)+'</p><div class="seg"><button class="ghost" data-nted="'+esc(n.id)+'">Badlo</button><button class="ghost" data-ntdel="'+esc(n.id)+'">Hatao</button></div></details>';}).join(''):'<p class="msg">'+((S.notes||[]).length?'Is chhan me kuch nahi mila.':'Abhi kuch nahi likha. Upar se shuru karo.')+'</p>';}
+$('nt_types').addEventListener('click',function(e){var b=e.target.closest('button[data-nt]');if(b){ntType=b.dataset.nt;renderNotes();}});
+$('nt_filter').addEventListener('click',function(e){var b=e.target.closest('button[data-ntf]');if(b){ntFilter=b.dataset.ntf;renderNotes();}});
+$('nt_find').addEventListener('input',renderNoteList);
+$('nt_save').onclick=function(){var txt=$('nt_text').value.trim(),m=$('nt_msg');if(!txt){m.textContent='Pehle kuch likho.';return;}
+  var dt=$('nt_date').value||today(),title=$('nt_title').value.trim().slice(0,80),tm=nowHM();S.notes=S.notes||[];
+  if(ntEdit){var n=S.notes.filter(function(x){return x.id===ntEdit;})[0];if(n){n.type=ntType;n.title=title;n.text=txt;n.date=dt;n.edited=today()+' '+tm;}ntEdit=null;m.textContent='Badal diya.';}
+  else{S.notes.push({id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),date:dt,time:tm,type:ntType,title:title,text:txt});m.textContent='Save ho gaya ('+dt+' '+tm+').';}
+  save();$('nt_text').value='';$('nt_title').value='';$('nt_date').value=today();renderNotes();};
+$('nt_cancel').onclick=function(){ntEdit=null;$('nt_text').value='';$('nt_title').value='';$('nt_date').value=today();$('nt_msg').textContent='';renderNotes();};
+$('nt_list').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+  if(b.dataset.nted){var n=(S.notes||[]).filter(function(x){return x.id===b.dataset.nted;})[0];if(!n)return;ntEdit=n.id;ntType=n.type;$('nt_title').value=n.title||'';$('nt_text').value=n.text;$('nt_date').value=n.date;renderNotes();$('nt_text').focus();}
+  else if(b.dataset.ntdel){arm(b,function(){S.notes=(S.notes||[]).filter(function(x){return x.id!==b.dataset.ntdel;});if(ntEdit===b.dataset.ntdel)ntEdit=null;save();renderNotes();});}});
+setInterval(function(){if(!$('v-likho').hidden&&!ntEdit)$('nt_time').textContent='Samay (phone se): '+nowHM()+'. Save dabate hi yahi judega.';},20000);
+
 /* ---- Khana aur paani ---- */
 /* Roti dheere-dheere: 4+4 se 2 (din) + 1 (raat) tak, har hafte ek kadam. Raat ko roti ki jagah khichdi/dalia bhi chalega. */
 var FOOD_PLAN=[[3,3],[3,2],[2,2],[2,1]],FOOD_START='2026-11-20',WATER_GOAL=10;
@@ -487,12 +530,12 @@ var BOOKS={
   show();run();})();
 
 /* ---- routing ---- */
-var VIEWS=['aaj','diary','simran','alarm','report'];
+var VIEWS=['aaj','diary','simran','alarm','likho','report'];
 function renderAll(){var raw=(location.hash||'#aaj').slice(1),h=raw==='satsang'?'aaj':raw;if(VIEWS.indexOf(h)<0)h='aaj';
   VIEWS.forEach(function(v){$('v-'+v).hidden=v!==h;});
   [].forEach.call(document.querySelectorAll('nav a'),function(a){if(a.getAttribute('href')==='#'+h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   $('lvchip').textContent='Level '+lvl();
-  if(h==='aaj')renderAaj();if(h==='diary')renderDiary();if(h==='simran'){renderTimer();renderSimran();}if(h==='alarm')renderAlarm();if(h==='report')renderReport();
+  if(h==='aaj')renderAaj();if(h==='diary')renderDiary();if(h==='simran'){renderTimer();renderSimran();}if(h==='alarm')renderAlarm();if(h==='likho')renderNotes();if(h==='report')renderReport();
   $('nostore').hidden=storeOK;window.scrollTo(0,0);if(raw==='satsang'&&$('satcard')&&$('satcard').scrollIntoView)$('satcard').scrollIntoView();}
 window.addEventListener('hashchange',renderAll);
 document.addEventListener('visibilitychange',function(){var h=(location.hash||'#aaj').slice(1);
