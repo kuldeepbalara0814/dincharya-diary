@@ -87,6 +87,8 @@ a.lnk{color:var(--accent);font-weight:600;font-size:13px;margin-left:4px}
 #lock{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding:24px}
 #lock .lockbox{width:100%;max-width:340px;display:grid;gap:12px}#lock h2{font:700 22px var(--f-num);margin:0}
 .chart svg{display:block;width:100%;height:auto}
+.nk{border-top:1px solid var(--line);padding:10px 0;display:grid;gap:8px}.nk:first-of-type{border-top:0}.nk b{font-size:16px}
+.nk .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ntx{white-space:pre-wrap;margin:8px 0;overflow-wrap:anywhere}details.note{border-top:1px solid var(--line);padding:8px 0}
 details.note summary{cursor:pointer}.tag{font:600 12px var(--f-num);background:var(--soft);border-radius:99px;padding:2px 8px;margin-left:6px}
 .warn{background:var(--soft);border-radius:10px;padding:10px;font-size:14px}
@@ -144,7 +146,7 @@ body{padding-top:env(safe-area-inset-top,0px)}
   </section>
 
   <section id="v-diary" hidden>
-    <div class="card"><label>Tarikh<input type="date" id="d_date"></label></div>
+    <div class="card"><label>Tarikh<input type="date" id="d_date"></label><div class="seg" id="fmtseg" style="margin-top:10px"></div></div>
     <div class="card" id="dform"></div>
   </section>
 
@@ -250,7 +252,7 @@ function firstDay(){var ds=Object.keys(S.days).filter(function(d){return S.days[
 function renderAaj(){renderFood();renderSat();renderStreak();
   var t=today(),tk=S.ticks[t]||{},now=new Date(),nm=now.getHours()*60+now.getMinutes();
   $('today').textContent=now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
-  $('lvchip').textContent='Level '+lvl();
+  $('lvchip').textContent=chipText();
   var pend=NIYAM.filter(function(n){return !tk[n[0]];}),cur=null,nxt=null;
   pend.forEach(function(n){var m=tmin(ntime(n[0]));if(m<=nm)cur=n;else if(!nxt)nxt=n;});
   var any=Object.keys(S.days).length||S.sessions.length,lb=S.lastBackup,old=!lb||(fromYmd(t)-fromYmd(lb))/864e5>7,nag=$('bknag');
@@ -314,7 +316,7 @@ function delBtn(d){return S.days[d]?'<button class="ghost" data-deld="'+d+'">Is 
 
 /* ---- Diary ---- */
 function renderDiary(){
-  var dt=$('d_date');dt.max=today();if(!dt.value)dt.value=today();var d=dt.value,e=S.days[d]||{},l=lvl(),past=d<today()&&Object.keys(e).length>0,F=$('dform');
+  var dt=$('d_date');dt.max=today();if(!dt.value)dt.value=today();var d=dt.value,e=S.days[d]||{},l=lvl(),past=d<today()&&Object.keys(e).length>0,F=$('dform');renderFmtBar();if(fmt()==='kirpal'){renderKirpal(d,e,past,F);return;}
   function ro(label,v){return '<p><span class="msg">'+label+'</span><br>'+(esc(v)||'-')+'</p>';}
   if(past){F.innerHTML='<h2>'+d+'</h2><p class="msg">Purani diary badli nahi jati.</p>'+fields(4).filter(function(f){return e[f[0]]!=null;}).map(function(f){return ro(f[1],f[2]==='dur'?hm(e[f[0]]):e[f[0]]);}).join('')+AQ.concat(LQ).filter(function(q){return e[q[0]];}).map(function(q){return ro(q[1],e[q[0]]);}).join('')+delBtn(d);return;}
   var h='<div class="form"><div class="warn">Kitab-baat: '+esc(TIPS[l])+'</div>';
@@ -341,7 +343,7 @@ $('dform').addEventListener('click',function(e){var dd=e.target.closest('button[
 function renderReport(){
   var t=today(),d=new Date(),days=[];for(var i=6;i>=0;i--)days.push(ymd(addDays(d,-i)));
   var filled=days.filter(function(x){return S.days[x]&&Object.keys(S.days[x]).length;}),n=filled.length,rows=[],best=null,worst=null;
-  fields(lvl()).forEach(function(f){var got=filled.filter(function(x){return S.days[x][f[0]]!=null&&S.days[x][f[0]]!=='';});
+  repFields().forEach(function(f){var got=filled.filter(function(x){return S.days[x][f[0]]!=null&&S.days[x][f[0]]!=='';});
     var c=f[2]==='yn'?got.filter(function(x){return S.days[x][f[0]]==='✓';}).length:got.length,p=Math.round(100*c/7);rows.push([f[1],p,true]);});
   var nd=rows.length;
   NIYAM.forEach(function(k){var c=days.filter(function(x){return S.ticks[x]&&S.ticks[x][k[0]];}).length;rows.push([k[1],Math.round(100*c/7),false]);});
@@ -356,9 +358,9 @@ function renderReport(){
    +(best?'<p>Sabse achha: '+esc(best[0])+' ('+best[1]+'%)<br>Sabse kamzor: '+esc(worst[0])+' ('+worst[1]+'%)</p>':'')
    +'<p class="verdict">'+esc(v)+'</p><p class="msg">'+esc(next)+'</p>';
   $('lvseg').innerHTML=[1,2,3,4].map(function(l){return '<button aria-pressed="'+(l===lvl())+'" data-l="'+l+'">Level '+l+'</button>';}).join('');
-  $('lvmsg').textContent='Level 1: uthna + simran. 2: dincharya. 3: Ahimsa, Sachai, Namrata. 4: poora format. Pichle 7 din me 5 din diary bhari ho to agle level par jao.';
+  $('lvmsg').textContent='Level sirf "Aasaan (level)" diary me kaam karta hai; Kirpal Ji ke poore format me saare 7 निरीक्षण hamesha dikhte hain. Level 1: uthna + simran. 2: dincharya. 3: Ahimsa, Sachai, Namrata. 4: poora format. Pichle 7 din me 5 din diary bhari ho to agle level par jao.';
   $('bk').value=JSON.stringify(S);pinState();}
-$('lvseg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.level=+b.dataset.l;save();renderReport();$('lvchip').textContent='Level '+lvl();});
+$('lvseg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S.level=+b.dataset.l;save();renderReport();$('lvchip').textContent=chipText();});
 $('bk_copy').onclick=function(){var el=$('bk'),m=$('bk_msg');el.value=JSON.stringify(S);
   var ok=function(){m.textContent='Copy ho gaya. Kahin safe jagah paste karke rakh lo.';},no=function(){el.select();m.textContent='Text chuna hua hai, ab khud copy karo.';};
   try{navigator.clipboard.writeText(el.value).then(ok,no);}catch(x){no();}};
@@ -487,6 +489,45 @@ $('nt_list').addEventListener('click',function(e){var b=e.target.closest('button
   else if(b.dataset.ntdel){arm(b,function(){S.notes=(S.notes||[]).filter(function(x){return x.id!==b.dataset.ntdel;});if(ntEdit===b.dataset.ntdel)ntEdit=null;save();renderNotes();});}});
 setInterval(function(){if(!$('v-likho').hidden&&!ntEdit)$('nt_time').textContent='Samay (phone se): '+nowHM()+'. Save dabate hi yahi judega.';},20000);
 
+/* ---- Sant Kirpal Singh Ji ka poora diary format ---- */
+var KIRPAL=[['ahimsa','अहिंसा','Ahimsa'],['sachai','सच्चाई','Sachai (sach / jhoot)'],['pavitrata','पवित्रता','Pavitrata'],['namrata','नम्रता','Namrata'],
+  ['seva','निस्वार्थ सेवा','Nishkam seva'],['aahar','आहार','Aahar'],['bhajan','भजन-सिमरन','Bhajan-simran']];
+function fmt(){return S.fmt||'kirpal';}
+function chipText(){return fmt()==='kirpal'?'Kirpal Ji ka format':'Level '+lvl();}
+function repFields(){return fmt()==='kirpal'?KIRPAL.map(function(k){return [k[0],k[2],'yn'];}):fields(lvl());}
+function renderFmtBar(){$('fmtseg').innerHTML=[['kirpal','Kirpal Ji ka poora format'],['lvl','Aasaan (level)']].map(function(x){return '<button type="button" aria-pressed="'+(fmt()===x[0])+'" data-fmt="'+x[0]+'">'+x[1]+'</button>';}).join('');}
+$('fmtseg').addEventListener('click',function(e){var b=e.target.closest('button[data-fmt]');if(!b)return;S.fmt=b.dataset.fmt;save();$('lvchip').textContent=chipText();renderDiary();});
+function renderKirpal(d,e,past,F){
+  function seg(k,v){return '<div class="seg" id="k_'+k+'" data-v="'+esc(v||'')+'">'+['✓','✗','–'].map(function(c){return '<button type="button" aria-pressed="'+(v===c)+'" data-c="'+c+'" aria-label="'+c+'">'+c+'</button>';}).join('')+'</div>';}
+  if(past){
+    F.innerHTML='<h2>'+d+'</h2><p class="msg">Purani diary badli nahi jati.</p><div class="scroll"><table><tr><th>निरीक्षण</th><th>आज</th><th>टिप्पणी</th></tr>'+KIRPAL.map(function(k){
+      var extra=k[0]==='bhajan'&&(e.kr_sim!=null||e.kr_bhj!=null)?'सिमरन '+(e.kr_sim||0)+' + भजन '+(e.kr_bhj||0)+' मिनट':(e['n_'+k[0]]||'');
+      return '<tr><td>'+k[1]+'</td><td>'+esc(e[k[0]]||'-')+'</td><td>'+esc(extra)+'</td></tr>';}).join('')+'</table></div>'
+      +[['l_kiya','कल मैंने क्या किया'],['l_kaisa','कैसा रहा'],['l_sudhar','आज एक सुधार'],['a_acha','Aaj kya acha gaya'],['a_chuka','Kahan chuka'],['a_sudhar','Kal ka sudhaar']].filter(function(q){return e[q[0]];}).map(function(q){return '<p><span class="msg">'+q[1]+'</span><br>'+esc(e[q[0]])+'</p>';}).join('')
+      +(e.uthna||e.sona?'<p class="msg">Uthna '+esc(e.uthna||'-')+' | Sona '+esc(e.sona||'-')+'</p>':'')+delBtn(d);return;}
+  var h='<div class="form"><div class="warn">Sant Kirpal Singh Ji ke 7 निरीक्षण (शाम 7:00 से 7:20). Har ek ke liye ✓ (kiya) / ✗ (nahi hua) / – (lagu nahi) chuno, aur chaho to टिप्पणी likho.</div>';
+  KIRPAL.forEach(function(k,i){var key=k[0];
+    h+='<div class="nk"><b>'+(i+1)+'. '+k[1]+' <span class="msg">'+k[2]+'</span></b>'+seg(key,e[key]);
+    if(key==='bhajan')h+='<div class="two"><label>सिमरन (minute)<input type="number" id="kn_sim" min="0" inputmode="numeric" value="'+esc(e.kr_sim==null?'':e.kr_sim)+'"></label><label>भजन (minute)<input type="number" id="kn_bhj" min="0" inputmode="numeric" value="'+esc(e.kr_bhj==null?'':e.kr_bhj)+'"></label></div><p class="msg">Ye minute 10,000 ghante ke hisaab me jud jate hain (timer wale alag jodte hain).</p>';
+    else h+='<input type="text" id="kn_'+key+'" placeholder="टिप्पणी (khali chhod sakte ho)" autocomplete="off" value="'+esc(e['n_'+key]||'')+'">';
+    h+='</div>';});
+  h+='<b>कल का लेखा</b>'+[['l_kiya','कल मैंने क्या किया'],['l_kaisa','कैसा रहा / किस पर चला, किस पर नहीं'],['l_sudhar','आज एक सुधार']].map(function(q){return '<label>'+q[1]+'<textarea id="f_'+q[0]+'">'+esc(e[q[0]]||'')+'</textarea></label>';}).join('');
+  h+='<details><summary class="msg">Raat ka analysis aur uthne/sone ka time (chaho to)</summary><div class="form" style="margin-top:8px">'
+    +'<label>Uthne ka time<input type="time" id="f_uthna" value="'+esc(e.uthna||'')+'"></label><label>Sone ka time<input type="time" id="f_sona" value="'+esc(e.sona||'')+'"></label>'
+    +AQ.map(function(q){return '<label>'+q[1]+'<textarea id="f_'+q[0]+'">'+esc(e[q[0]]||'')+'</textarea></label>';}).join('')+'</div></details>';
+  h+='<button class="big" id="k_save">Save karo</button><div class="msg" id="d_msg"></div>'+delBtn(d)+'</div>';F.innerHTML=h;}
+$('dform').addEventListener('click',function(e){if(e.target.id!=='k_save')return;var d=$('d_date').value,o=Object.assign({},S.days[d]||{}),any=false;
+  KIRPAL.forEach(function(k){var v=$('k_'+k[0]).dataset.v;if(v){o[k[0]]=v;any=true;}else delete o[k[0]];
+    if(k[0]!=='bhajan'){var t=$('kn_'+k[0]).value.trim();if(t){o['n_'+k[0]]=t;any=true;}else delete o['n_'+k[0]];}});
+  var s1=$('kn_sim').value,s2=$('kn_bhj').value;
+  if(s1!==''){o.kr_sim=Math.max(0,+s1);any=true;}else delete o.kr_sim;
+  if(s2!==''){o.kr_bhj=Math.max(0,+s2);any=true;}else delete o.kr_bhj;
+  if((o.kr_sim||0)+(o.kr_bhj||0)>0)o.simran=(o.kr_sim||0)+(o.kr_bhj||0);
+  ['l_kiya','l_kaisa','l_sudhar','a_acha','a_chuka','a_sudhar'].forEach(function(k){var t=$('f_'+k).value.trim();if(t){o[k]=t;any=true;}else delete o[k];});
+  ['uthna','sona'].forEach(function(k){var t=$('f_'+k).value;if(t){o[k]=t;any=true;}else delete o[k];});
+  if(!any){$('d_msg').textContent='Abhi kuch bhara nahi hai.';return;}
+  S.days[d]=o;save();renderDiary();var mm=$('d_msg');if(mm)mm.textContent='Save ho gaya.';});
+
 /* ---- Khana aur paani ---- */
 /* Roti dheere-dheere: 4+4 se 2 (din) + 1 (raat) tak, har hafte ek kadam. Raat ko roti ki jagah khichdi/dalia bhi chalega. */
 var FOOD_PLAN=[[3,3],[3,2],[2,2],[2,1]],FOOD_START='2026-11-20',WATER_GOAL=10;
@@ -534,7 +575,7 @@ var VIEWS=['aaj','diary','simran','alarm','likho','report'];
 function renderAll(){var raw=(location.hash||'#aaj').slice(1),h=raw==='satsang'?'aaj':raw;if(VIEWS.indexOf(h)<0)h='aaj';
   VIEWS.forEach(function(v){$('v-'+v).hidden=v!==h;});
   [].forEach.call(document.querySelectorAll('nav a'),function(a){if(a.getAttribute('href')==='#'+h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
-  $('lvchip').textContent='Level '+lvl();
+  $('lvchip').textContent=chipText();
   if(h==='aaj')renderAaj();if(h==='diary')renderDiary();if(h==='simran'){renderTimer();renderSimran();}if(h==='alarm')renderAlarm();if(h==='likho')renderNotes();if(h==='report')renderReport();
   $('nostore').hidden=storeOK;window.scrollTo(0,0);if(raw==='satsang'&&$('satcard')&&$('satcard').scrollIntoView)$('satcard').scrollIntoView();}
 window.addEventListener('hashchange',renderAll);
